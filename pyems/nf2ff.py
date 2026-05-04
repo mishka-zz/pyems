@@ -5,12 +5,10 @@ from pyems.calc import wavelength
 
 
 class NF2FF:
-    """
-    """
+    """ """
 
     def __init__(self, sim):
-        """
-        """
+        """ """
         self._sim = sim
         self._box = self._construct_box()
         self.sim.register_nf2ff(self.box)
@@ -23,19 +21,16 @@ class NF2FF:
 
     @property
     def sim(self):
-        """
-        """
+        """ """
         return self._sim
 
     @property
     def box(self):
-        """
-        """
+        """ """
         return self._box
 
     def gain(self):
-        """
-        """
+        """ """
         if self._gain is None:
             raise RuntimeError("Must call calc before retrieving values.")
         return 10 * np.log10(self._gain)
@@ -60,8 +55,7 @@ class NF2FF:
             return (
                 20
                 * np.log10(
-                    self._enorm[theta_idx, :]
-                    / np.amax(self._enorm[theta_idx, :])
+                    self._enorm[theta_idx, :] / np.amax(self._enorm[theta_idx, :])
                 )
                 + self.gain()
             )
@@ -69,9 +63,7 @@ class NF2FF:
             phi_idx = array_index(phi, self._phi)
             return (
                 20
-                * np.log10(
-                    self._enorm[:, phi_idx] / np.amax(self._enorm[:, phi_idx])
-                )
+                * np.log10(self._enorm[:, phi_idx] / np.amax(self._enorm[:, phi_idx]))
                 + self.gain()
             )
         else:
@@ -87,8 +79,7 @@ class NF2FF:
             )
 
     def directivity(self, effective_aperture: float) -> float:
-        """
-        """
+        """ """
         return (
             effective_aperture
             * 4
@@ -97,8 +88,7 @@ class NF2FF:
         )
 
     def _construct_box(self):
-        """
-        """
+        """ """
         if self.sim.mesh is None:
             raise RuntimeError(
                 "Mesh must be created before initializing a "
@@ -141,11 +131,9 @@ class NF2FF:
         self._calc_enorm(res)
 
     def _calc_gain(self, nf2ff_res) -> None:
-        """
-        """
+        """ """
         self._gain = nf2ff_res.Dmax[0]
 
     def _calc_enorm(self, nf2ff_res) -> None:
-        """
-        """
+        """ """
         self._enorm = nf2ff_res.E_norm[0]

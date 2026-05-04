@@ -11,8 +11,7 @@ from pyems.priority import priorities
 # TODO self.csx_box is messy. Should instead wrap CSPrimitives and
 # member primitive should have a box.
 class Probe:
-    """
-    """
+    """ """
 
     unique_ctr = 0
 
@@ -25,8 +24,7 @@ class Probe:
         weight: float = 1,
         mode_function: List = None,
     ):
-        """
-        """
+        """ """
         self._sim = sim
         self._box = box
         self.p_type = p_type
@@ -45,19 +43,16 @@ class Probe:
 
     @property
     def sim(self) -> Simulation:
-        """
-        """
+        """ """
         return self._sim
 
     @property
     def box(self) -> Box3:
-        """
-        """
+        """ """
         return self._box
 
     def pml_overlap(self) -> bool:
-        """
-        """
+        """ """
         pml_boxes = self.sim.mesh.pml_boxes()
         for pml_box in pml_boxes:
             if box_overlap(self.box, pml_box):
@@ -65,11 +60,8 @@ class Probe:
         return False
 
     def _set_probe(self) -> None:
-        """
-        """
-        self.csx_probe = self.sim.csx.AddProbe(
-            name=self.name, p_type=self.p_type
-        )
+        """ """
+        self.csx_probe = self.sim.csx.AddProbe(name=self.name, p_type=self.p_type)
         self.csx_probe.SetWeighting(self.weight)
 
         if self._normal_axis is not None:
@@ -79,7 +71,9 @@ class Probe:
             self.csx_probe.SetModeFunction(self.mode_function)
 
         self.csx_box = construct_box(
-            prop=self.csx_probe, box=self.box, priority=priorities["x"],
+            prop=self.csx_probe,
+            box=self.box,
+            priority=priorities["x"],
         )
 
     def snap_to_mesh(self, mesh) -> None:

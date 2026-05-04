@@ -264,8 +264,7 @@ class Port(ABC):
         """
         if self.v_inc is None or self.i_inc is None:
             raise RuntimeError(
-                "Must calculate incoming and reflected "
-                "voltages / current before power."
+                "Must calculate incoming and reflected voltages / current before power."
             )
         else:
             self.p_inc = (1 / 2) * np.real(self.v_inc * np.conj(self.i_inc))
@@ -276,14 +275,13 @@ class Port(ABC):
         """
         if self.v_ref is None or self.i_ref is None:
             raise RuntimeError(
-                "Must calculate incoming and reflected "
-                "voltages / current before power."
+                "Must calculate incoming and reflected voltages / current before power."
             )
         else:
             self.p_ref = (1 / 2) * np.real(self.v_ref * np.conj(self.i_ref))
 
     def _calc_beta(self, v, i, dv, di) -> None:
-        """
+        r"""
         Calculate the transmission line propagation constant.
 
         Use tx line equations (see Pozar ch.2 for derivation):
@@ -298,7 +296,7 @@ class Port(ABC):
         self.beta[np.real(self.beta) < 0] *= -1
 
     def _calc_z0(self, v, i, dv, di) -> None:
-        """
+        r"""
         Calculate the transmission line characteristic impedance.
 
         Use tx line equations (see Pozar ch.2 for derivation):
@@ -325,12 +323,10 @@ class Port(ABC):
         self._data_read = True
         v = self.vprobes[1].get_freq_data()[1]
         i = 0.5 * (
-            self.iprobes[0].get_freq_data()[1]
-            + self.iprobes[1].get_freq_data()[1]
+            self.iprobes[0].get_freq_data()[1] + self.iprobes[1].get_freq_data()[1]
         )
         dv = (
-            self.vprobes[2].get_freq_data()[1]
-            - self.vprobes[0].get_freq_data()[1]
+            self.vprobes[2].get_freq_data()[1] - self.vprobes[0].get_freq_data()[1]
         ) / (
             self.sim.unit
             * np.abs(
@@ -339,8 +335,7 @@ class Port(ABC):
             )
         )
         di = (
-            self.iprobes[1].get_freq_data()[1]
-            - self.iprobes[0].get_freq_data()[1]
+            self.iprobes[1].get_freq_data()[1] - self.iprobes[0].get_freq_data()[1]
         ) / (
             self.sim.unit
             * np.abs(
@@ -469,9 +464,7 @@ class MicrostripPort(Port):
     def _check_axes_perpendicular(self) -> None:
         """"""
         if self._propagation_axis.axis == self._excitation_axis.axis:
-            raise ValueError(
-                "Excitation and propagation axes must be perpendicular."
-            )
+            raise ValueError("Excitation and propagation axes must be perpendicular.")
 
     def _set_trace(self) -> None:
         """
@@ -572,28 +565,20 @@ class MicrostripPort(Port):
             prop_index, vxmid = mesh.nearest_mesh_line(
                 prop_axis,
                 trace_box.min_corner[prop_axis]
-                + (
-                    self.measurement_shift * (trace_prop_high - trace_prop_low)
-                ),
+                + (self.measurement_shift * (trace_prop_high - trace_prop_low)),
             )
         else:
             prop_index, vxmid = mesh.nearest_mesh_line(
                 prop_axis,
                 trace_box.max_corner[prop_axis]
-                - (
-                    self.measurement_shift * (trace_prop_high - trace_prop_low)
-                ),
+                - (self.measurement_shift * (trace_prop_high - trace_prop_low)),
             )
         mesh.set_lines_equidistant(0, prop_index - 1, prop_index + 1)
 
         v_prop_pos = [
-            mesh.get_mesh_line(
-                prop_axis, prop_index - self._propagation_direction()
-            ),
+            mesh.get_mesh_line(prop_axis, prop_index - self._propagation_direction()),
             mesh.get_mesh_line(prop_axis, prop_index),
-            mesh.get_mesh_line(
-                prop_axis, prop_index + self._propagation_direction()
-            ),
+            mesh.get_mesh_line(prop_axis, prop_index + self._propagation_direction()),
         ]
         i_prop_pos = [
             (v_prop_pos[0] + v_prop_pos[1]) / 2,
@@ -601,9 +586,7 @@ class MicrostripPort(Port):
         ]
 
         for idx in range(3):
-            box = Box3(
-                Coordinate3(None, None, None), Coordinate3(None, None, None)
-            )
+            box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
             box.min_corner[prop_axis] = v_prop_pos[idx]
             box.max_corner[prop_axis] = v_prop_pos[idx]
             box.min_corner[trace_perp_axis] = trace_perp_mid
@@ -620,9 +603,7 @@ class MicrostripPort(Port):
             )
 
         for idx in range(2):
-            box = Box3(
-                Coordinate3(None, None, None), Coordinate3(None, None, None)
-            )
+            box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
             box.min_corner[prop_axis] = i_prop_pos[idx]
             box.max_corner[prop_axis] = i_prop_pos[idx]
             box.min_corner[trace_perp_axis] = trace_perp_low
@@ -651,9 +632,7 @@ class MicrostripPort(Port):
             box.min_corner[feed_axis] = old_max
 
         prop_axis = self._propagation_axis.axis
-        prop_dist = (
-            self.box.max_corner[prop_axis] - self.box.min_corner[prop_axis]
-        )
+        prop_dist = self.box.max_corner[prop_axis] - self.box.min_corner[prop_axis]
         if self._propagation_axis.is_positive_direction():
             _, prop_pos = mesh.nearest_mesh_line(
                 prop_axis,
@@ -810,17 +789,12 @@ class DifferentialMicrostripPort(Port):
     def _check_axes_perpendicular(self) -> None:
         """"""
         if self._propagation_axis.axis == self._excitation_axis.axis:
-            raise ValueError(
-                "Excitation and propagation axes must be perpendicular."
-            )
+            raise ValueError("Excitation and propagation axes must be perpendicular.")
 
     def _check_normal_axis_size(self) -> None:
         """"""
         normal_axis = self._normal_axis().axis
-        if (
-            self._box.max_corner[normal_axis]
-            != self._box.min_corner[normal_axis]
-        ):
+        if self._box.max_corner[normal_axis] != self._box.min_corner[normal_axis]:
             raise ValueError(
                 "Size of box in direction normal to microstrip plane must be 0."
             )
@@ -869,20 +843,16 @@ class DifferentialMicrostripPort(Port):
             box.min_corner[feed_axis] = old_max
 
         prop_axis = self._propagation_axis.axis
-        prop_dist = (
-            self._box.max_corner[prop_axis] - self._box.min_corner[prop_axis]
-        )
+        prop_dist = self._box.max_corner[prop_axis] - self._box.min_corner[prop_axis]
         if self._propagation_axis.is_positive_direction():
             _, prop_pos = mesh.nearest_mesh_line(
                 prop_axis,
-                self._box.min_corner[prop_axis]
-                + (self._feed_shift * prop_dist),
+                self._box.min_corner[prop_axis] + (self._feed_shift * prop_dist),
             )
         else:
             _, prop_pos = mesh.nearest_mesh_line(
                 prop_axis,
-                self._box.max_corner[prop_axis]
-                - (self._feed_shift * prop_dist),
+                self._box.max_corner[prop_axis] - (self._feed_shift * prop_dist),
             )
 
         box.max_corner[prop_axis] = prop_pos
@@ -902,32 +872,24 @@ class DifferentialMicrostripPort(Port):
         excite_pos_lower = self._box.min_corner[excite_axis] + trace_width
         excite_pos_upper = self._box.max_corner[excite_axis] - trace_width
 
-        prop_dist = (
-            self._box.max_corner[prop_axis] - self._box.min_corner[prop_axis]
-        )
+        prop_dist = self._box.max_corner[prop_axis] - self._box.min_corner[prop_axis]
 
         if self._propagation_axis.is_positive_direction():
             prop_index, _ = mesh.nearest_mesh_line(
                 prop_axis,
-                self._box.min_corner[prop_axis]
-                + (self._measurement_shift * prop_dist),
+                self._box.min_corner[prop_axis] + (self._measurement_shift * prop_dist),
             )
         else:
             prop_index, _ = mesh.nearest_mesh_line(
                 prop_axis,
-                self._box.max_corner[prop_axis]
-                - (self._measurement_shift * prop_dist),
+                self._box.max_corner[prop_axis] - (self._measurement_shift * prop_dist),
             )
         mesh.set_lines_equidistant(0, prop_index - 1, prop_index + 1)
 
         v_prop_pos = [
-            mesh.get_mesh_line(
-                prop_axis, prop_index - self._propagation_direction()
-            ),
+            mesh.get_mesh_line(prop_axis, prop_index - self._propagation_direction()),
             mesh.get_mesh_line(prop_axis, prop_index),
-            mesh.get_mesh_line(
-                prop_axis, prop_index + self._propagation_direction()
-            ),
+            mesh.get_mesh_line(prop_axis, prop_index + self._propagation_direction()),
         ]
         i_prop_pos = [
             (v_prop_pos[0] + v_prop_pos[1]) / 2,
@@ -935,9 +897,7 @@ class DifferentialMicrostripPort(Port):
         ]
 
         for idx in range(3):
-            box = Box3(
-                Coordinate3(None, None, None), Coordinate3(None, None, None)
-            )
+            box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
             box.min_corner[prop_axis] = v_prop_pos[idx]
             box.max_corner[prop_axis] = v_prop_pos[idx]
             box.min_corner[normal_axis] = normal_pos
@@ -969,12 +929,8 @@ class DifferentialMicrostripPort(Port):
             boxes[0].min_corner[excite_axis] = (
                 self._box.max_corner[excite_axis] - trace_width
             )
-            boxes[0].max_corner[excite_axis] = self._box.max_corner[
-                excite_axis
-            ]
-            boxes[1].min_corner[excite_axis] = self._box.min_corner[
-                excite_axis
-            ]
+            boxes[0].max_corner[excite_axis] = self._box.max_corner[excite_axis]
+            boxes[1].min_corner[excite_axis] = self._box.min_corner[excite_axis]
             boxes[1].max_corner[excite_axis] = (
                 self._box.min_corner[excite_axis] + trace_width
             )
@@ -1016,12 +972,10 @@ class DifferentialMicrostripPort(Port):
         # )
         # i = 0.5 * (i1 + i2)
         i = 0.5 * (
-            self.iprobes[0].get_freq_data()[1]
-            + self.iprobes[2].get_freq_data()[1]
+            self.iprobes[0].get_freq_data()[1] + self.iprobes[2].get_freq_data()[1]
         )
         dv = (
-            self.vprobes[2].get_freq_data()[1]
-            - self.vprobes[0].get_freq_data()[1]
+            self.vprobes[2].get_freq_data()[1] - self.vprobes[0].get_freq_data()[1]
         ) / (
             self.sim.unit
             * np.abs(
@@ -1037,8 +991,7 @@ class DifferentialMicrostripPort(Port):
         #     )
         # )
         di = (
-            self.iprobes[2].get_freq_data()[1]
-            - self.iprobes[0].get_freq_data()[1]
+            self.iprobes[2].get_freq_data()[1] - self.iprobes[0].get_freq_data()[1]
         ) / (
             self.sim.unit
             * np.abs(
@@ -1097,39 +1050,28 @@ class CPWPort(Port):
         [iprobe.read() for iprobe in self.iprobes]
         self._data_read = True
         v0 = 0.5 * (
-            self.vprobes[0].get_freq_data()[1]
-            + self.vprobes[1].get_freq_data()[1]
+            self.vprobes[0].get_freq_data()[1] + self.vprobes[1].get_freq_data()[1]
         )
         v1 = 0.5 * (
-            self.vprobes[2].get_freq_data()[1]
-            + self.vprobes[3].get_freq_data()[1]
+            self.vprobes[2].get_freq_data()[1] + self.vprobes[3].get_freq_data()[1]
         )
         v2 = 0.5 * (
-            self.vprobes[4].get_freq_data()[1]
-            + self.vprobes[5].get_freq_data()[1]
+            self.vprobes[4].get_freq_data()[1] + self.vprobes[5].get_freq_data()[1]
         )
         v = v1
 
         i = 0.5 * (
-            self.iprobes[0].get_freq_data()[1]
-            + self.iprobes[1].get_freq_data()[1]
+            self.iprobes[0].get_freq_data()[1] + self.iprobes[1].get_freq_data()[1]
         )
         dv = (v2 - v0) / (
             self.sim.unit
-            * (
-                self.vprobes[2].box.min_corner.x
-                - self.vprobes[0].box.min_corner.x
-            )
+            * (self.vprobes[2].box.min_corner.x - self.vprobes[0].box.min_corner.x)
         )
         di = (
-            self.iprobes[1].get_freq_data()[1]
-            - self.iprobes[0].get_freq_data()[1]
+            self.iprobes[1].get_freq_data()[1] - self.iprobes[0].get_freq_data()[1]
         ) / (
             self.sim.unit
-            * (
-                self.iprobes[1].box.min_corner.x
-                - self.iprobes[0].box.min_corner.x
-            )
+            * (self.iprobes[1].box.min_corner.x - self.iprobes[0].box.min_corner.x)
         )
 
         self._calc_beta(v, i, dv, di)
@@ -1195,19 +1137,14 @@ class CPWPort(Port):
         _, xpos = mesh.nearest_mesh_line(
             0,
             self.box.min_corner.x
-            + (
-                self.feed_shift
-                * (self.box.max_corner.x - self.box.min_corner.x)
-            ),
+            + (self.feed_shift * (self.box.max_corner.x - self.box.min_corner.x)),
         )
         feed_boxes = [
             Box3(Coordinate3(xpos, ystart, 0), Coordinate3(xpos, yend, 0))
             for ystart, yend in zip(
                 [
-                    self.box.min_corner.y
-                    - (self._propagation_direction() * self.gap),
-                    self.box.max_corner.y
-                    + (self._propagation_direction() * self.gap),
+                    self.box.min_corner.y - (self._propagation_direction() * self.gap),
+                    self.box.max_corner.y + (self._propagation_direction() * self.gap),
                 ],
                 [self.box.min_corner.y, self.box.max_corner.y],
             )
@@ -1396,9 +1333,7 @@ class RectWaveguidePort(Port):
         thickness: float,
     ) -> Box3:
         """"""
-        box = Box3(
-            Coordinate3(None, None, None), Coordinate3(None, None, None)
-        )
+        box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
         for dim in range(3):
             if dim == const_dim:
                 box.min_corner[dim] = self.box[const_dim_idx][dim] + (
@@ -1442,9 +1377,7 @@ class RectWaveguidePort(Port):
         self.m = float(self.mode_name[2])
         self.n = float(self.mode_name[3])
 
-        assert (
-            self.te
-        ), "Currently only TE-modes are supported! Mode found: {}".format(
+        assert self.te, "Currently only TE-modes are supported! Mode found: {}".format(
             self.mode_name
         )
 
@@ -1591,15 +1524,14 @@ class RectWaveguidePort(Port):
         a = self.a * self.sim.unit
         b = self.b * self.sim.unit
         self.kc = np.sqrt(
-            np.power((self.m * np.pi / a), 2)
-            + np.power((self.n * np.pi / b), 2)
+            np.power((self.m * np.pi / a), 2) + np.power((self.n * np.pi / b), 2)
         )
 
 
 class CoaxPort(Port):
     """
     Coaxial port.  This does not construct a coaxial cable.  For that,
-    use Coax in structure.py.
+    build the geometry manually.
     """
 
     def __init__(
@@ -1684,9 +1616,7 @@ class CoaxPort(Port):
         direction of propagation_axis.
         """
         prop_axis = self._propagation_axis().axis
-        direction = int(
-            np.sign(self._stop[prop_axis] - self._start[prop_axis])
-        )
+        direction = int(np.sign(self._stop[prop_axis] - self._start[prop_axis]))
         return direction
 
     def _set_core(self) -> None:
@@ -1728,8 +1658,7 @@ class CoaxPort(Port):
         """
         prop_axis = self.propagation_axis().intval()
         pos = (
-            self._measurement_shift
-            * (self._stop[prop_axis] - self._start[prop_axis])
+            self._measurement_shift * (self._stop[prop_axis] - self._start[prop_axis])
         ) + self._start[prop_axis]
         mid_idx, mid_pos = mesh.nearest_mesh_line(prop_axis, pos)
         mesh.set_lines_equidistant(prop_axis, mid_idx - 1, mid_idx + 1)
@@ -1746,47 +1675,31 @@ class CoaxPort(Port):
         ipos = [ilow, ihigh]
 
         for pos in vpos:
-            box = Box3(
-                Coordinate3(None, None, None), Coordinate3(None, None, None)
-            )
+            box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
             box.min_corner[prop_axis] = pos
             box.max_corner[prop_axis] = pos
 
             other_axis1 = (prop_axis + 1) % 3
-            box.min_corner[other_axis1] = (
-                self._start[other_axis1] - self._radius
-            )
+            box.min_corner[other_axis1] = self._start[other_axis1] - self._radius
             box.max_corner[other_axis1] = self._start[other_axis1]
 
             other_axis2 = (prop_axis + 2) % 3
             box.min_corner[other_axis2] = self._start[other_axis2]
             box.max_corner[other_axis2] = self._start[other_axis2]
-            self.vprobes.append(
-                Probe(sim=self.sim, box=box, p_type=0, weight=1)
-            )
+            self.vprobes.append(Probe(sim=self.sim, box=box, p_type=0, weight=1))
 
         for pos in ipos:
-            box = Box3(
-                Coordinate3(None, None, None), Coordinate3(None, None, None)
-            )
+            box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
             box.min_corner[prop_axis] = pos
             box.max_corner[prop_axis] = pos
 
             other_axis1 = (prop_axis + 1) % 3
-            box.min_corner[other_axis1] = (
-                self._start[other_axis1] - self._core_radius
-            )
-            box.max_corner[other_axis1] = (
-                self._start[other_axis1] + self._core_radius
-            )
+            box.min_corner[other_axis1] = self._start[other_axis1] - self._core_radius
+            box.max_corner[other_axis1] = self._start[other_axis1] + self._core_radius
 
             other_axis2 = (prop_axis + 2) % 3
-            box.min_corner[other_axis2] = (
-                self._start[other_axis2] - self._core_radius
-            )
-            box.max_corner[other_axis2] = (
-                self._start[other_axis2] + self._core_radius
-            )
+            box.min_corner[other_axis2] = self._start[other_axis2] - self._core_radius
+            box.max_corner[other_axis2] = self._start[other_axis2] + self._core_radius
             self.iprobes.append(
                 Probe(
                     sim=self.sim,
@@ -1812,9 +1725,7 @@ class CoaxPort(Port):
         ) + self._start[prop_axis]
         _, feed_pos = mesh.nearest_mesh_line(prop_axis, pos)
 
-        box = Box3(
-            Coordinate3(None, None, None), Coordinate3(None, None, None)
-        )
+        box = Box3(Coordinate3(None, None, None), Coordinate3(None, None, None))
         box.min_corner[prop_axis] = feed_pos
         box.max_corner[prop_axis] = feed_pos
 

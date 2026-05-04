@@ -89,15 +89,12 @@ class Simulation:
             self._sim_dir = sim_dir
         if timestep_factor <= 0 or timestep_factor > 1:
             raise ValueError(
-                "timestep_factor must be between 0 (exclusive) "
-                "and 1 (inclusive)."
+                "timestep_factor must be between 0 (exclusive) and 1 (inclusive)."
             )
         self._fdtd = openEMS(
             EndCriteria=self._end_criteria, TimeStepFactor=timestep_factor
         )
-        self._fdtd.SetGaussExcite(
-            self.center_frequency(), self.half_bandwidth()
-        )
+        self._fdtd.SetGaussExcite(self.center_frequency(), self.half_bandwidth())
         self._fdtd.SetBoundaryCond(self.boundary_conditions.as_list())
         self._fdtd.SetCSX(self._csx)
         self._ports = []
@@ -151,9 +148,7 @@ class Simulation:
         """"""
         return self._nf2ff
 
-    def run(
-        self, csx: bool = True, debug_pec: bool = False, threads: int = 2
-    ) -> None:
+    def run(self, csx: bool = True, debug_pec: bool = False, threads: int = 2) -> None:
         """
         Run simulation.
 
@@ -265,10 +260,7 @@ class Simulation:
 
         i -= 1
         j -= 1
-        s = (
-            self.ports[i].reflected_voltage()
-            / self.ports[j].incident_voltage()
-        )
+        s = self.ports[i].reflected_voltage() / self.ports[j].incident_voltage()
 
         if not dB:
             return s  # will return a complex variable

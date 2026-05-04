@@ -83,7 +83,7 @@ def add_material(
         sigma=sigma,
         density=density,
     )
-    if not color is None:
+    if color is not None:
         prop.SetColor(color, alpha)
 
     return prop
@@ -96,7 +96,7 @@ def add_metal(
 ) -> CSProperties:
     """"""
     prop = csx.AddMetal(name)
-    if not color is None:
+    if color is not None:
         prop.SetColor(color)
 
     return prop
@@ -115,7 +115,7 @@ def add_conducting_sheet(
         conductivity=conductivity,
         thickness=thickness,
     )
-    if not color is None:
+    if color is not None:
         prop.SetColor(color)
 
     return prop
@@ -129,9 +129,7 @@ def construct_box(
 ) -> CSPrimitives:
     """"""
     if transform is None:
-        box = _add_box(
-            prop=prop, priority=priority, start=box.start(), stop=box.stop()
-        )
+        box = _add_box(prop=prop, priority=priority, start=box.start(), stop=box.stop())
         return box
 
     if box.has_zero_dim():
@@ -249,23 +247,15 @@ def construct_polygon(
     first_coord_center = np.average(poly_points[0])
     second_coord_center = np.average(poly_points[1])
     if normal.intval() == 0:
-        center = Coordinate3(
-            elevation, first_coord_center, second_coord_center
-        )
+        center = Coordinate3(elevation, first_coord_center, second_coord_center)
     elif normal.intval() == 1:
-        center = Coordinate3(
-            first_coord_center, elevation, second_coord_center
-        )
+        center = Coordinate3(first_coord_center, elevation, second_coord_center)
     else:
-        center = Coordinate3(
-            first_coord_center, second_coord_center, elevation
-        )
+        center = Coordinate3(first_coord_center, second_coord_center, elevation)
 
     centered_pts = [
         np.subtract(pts, cent)
-        for pts, cent in zip(
-            poly_points, [first_coord_center, second_coord_center]
-        )
+        for pts, cent in zip(poly_points, [first_coord_center, second_coord_center])
     ]
 
     prim = _add_polygon(
@@ -300,9 +290,7 @@ def construct_cylinder(
     position = np.average([start, stop], axis=0)
     start = np.subtract(start, position)
     stop = np.subtract(stop, position)
-    cyl = prop.AddCylinder(
-        start=start, stop=stop, radius=radius, priority=priority
-    )
+    cyl = prop.AddCylinder(start=start, stop=stop, radius=radius, priority=priority)
     apply_transform(cyl, transform)
 
     translate = CSTransform()
@@ -347,12 +335,12 @@ def construct_cylindrical_shell(
 
 
 def _remove_prim_coord_dups(
-    coords: List[Union[Coordinate2, Coordinate3]]
+    coords: List[Union[Coordinate2, Coordinate3]],
 ) -> List[Union[Coordinate2, Coordinate3]]:
     """"""
     unique_coords = []
     for coord in coords:
-        if not coord in unique_coords:
+        if coord not in unique_coords:
             unique_coords.append(coord)
 
     return unique_coords

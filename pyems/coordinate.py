@@ -298,9 +298,7 @@ def c2_maybe_tuple(coord: C2Tuple) -> Coordinate2:
     """
     if isinstance(coord, Tuple):
         if not len(coord) == 2:
-            raise ValueError(
-                "Tuples passed as Coordinate2 must have length 2."
-            )
+            raise ValueError("Tuples passed as Coordinate2 must have length 2.")
         coord = Coordinate2(coord[0], coord[1])
 
     return coord
@@ -315,9 +313,7 @@ def c3_maybe_tuple(coord: C3Tuple) -> Coordinate3:
     """
     if isinstance(coord, Tuple):
         if not len(coord) == 3:
-            raise ValueError(
-                "Tuples passed as Coordinate3 must have length 3."
-            )
+            raise ValueError("Tuples passed as Coordinate3 must have length 3.")
         coord = Coordinate3(coord[0], coord[1], coord[2])
 
     return coord
@@ -343,9 +339,7 @@ def c3_from_dim(dim: int, vals: Tuple[float, float, float]) -> Coordinate3:
     this will return Coordinate3(vals[1], vals[2], vals[0]).  If
     dim==2, this will return Coordinate3(vals[2], vals[0], vals[1]).
     """
-    return Coordinate3(
-        vals[-dim % 3], vals[(-dim + 1) % 3], vals[(-dim + 2) % 3]
-    )
+    return Coordinate3(vals[-dim % 3], vals[(-dim + 1) % 3], vals[(-dim + 2) % 3])
 
 
 class Box2:
@@ -468,9 +462,7 @@ class Box3:
         return self._min_corner
 
     @min_corner.setter
-    def min_corner(
-        self, val: Union[Coordinate3, Tuple[float, float, float]]
-    ) -> None:
+    def min_corner(self, val: Union[Coordinate3, Tuple[float, float, float]]) -> None:
         """"""
         if isinstance(val, Tuple):
             if not len(val) == 3:
@@ -485,9 +477,7 @@ class Box3:
         return self._max_corner
 
     @max_corner.setter
-    def max_corner(
-        self, val: Union[Coordinate3, Tuple[float, float, float]]
-    ) -> None:
+    def max_corner(self, val: Union[Coordinate3, Tuple[float, float, float]]) -> None:
         """"""
         if isinstance(val, Tuple):
             if not len(val) == 3:
@@ -547,9 +537,7 @@ class Box3:
     def inside(self, point: Coordinate3) -> bool:
         """"""
         for dim in range(3):
-            if not val_inside(
-                point[dim], self.min_corner[dim], self.max_corner[dim]
-            ):
+            if not val_inside(point[dim], self.min_corner[dim], self.max_corner[dim]):
                 return False
         return True
 

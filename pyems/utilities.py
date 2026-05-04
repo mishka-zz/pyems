@@ -23,12 +23,7 @@ def print_table(
     extra_space = 3
     data = np.array(data)
     col_widths = [
-        int(
-            _val_digits(np.amax(np.absolute(data[col])))
-            + prec[col]
-            + 2
-            + extra_space
-        )
+        int(_val_digits(np.amax(np.absolute(data[col]))) + prec[col] + 2 + extra_space)
         for col in range(len(col_names))
     ]
 
@@ -45,13 +40,11 @@ def print_table(
     for row in data:
         for i, val in enumerate(row):
             out_file.write(
-                "{:<{width}.{prec}f}".format(
-                    val, width=col_widths[i], prec=prec[i]
-                )
+                "{:<{width}.{prec}f}".format(val, width=col_widths[i], prec=prec[i])
             )
         out_file.write("\n")
 
-    if close == True:
+    if close:
         out_file.close()
 
 
@@ -174,8 +167,7 @@ def max_priority() -> int:
 
 
 def get_unit(csx: ContinuousStructure) -> float:
-    """
-    """
+    """ """
     return csx.GetGrid().GetDeltaUnit()
 
 
@@ -224,12 +216,10 @@ def append_transform(tr1: CSTransform, tr2: CSTransform) -> CSTransform:
 
 
 def mil_to_mm(mil_val: float) -> float:
-    """
-    """
+    """ """
     return mil_val * 0.0254
 
 
 def mm_to_mil(mm_val: float) -> float:
-    """
-    """
+    """ """
     return mm_val / 0.0254

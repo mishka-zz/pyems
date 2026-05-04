@@ -14,20 +14,17 @@ def pml_num_cells(boundary: str) -> int:
 
 
 class BoundaryConditions:
-    """
-    """
+    """ """
 
     def __init__(
         self,
         boundary: Tuple[Tuple[str, str], Tuple[str, str], Tuple[str, str]],
     ):
-        """
-        """
+        """ """
         self.boundary = boundary
 
     def as_list(self) -> List[str]:
-        """
-        """
+        """ """
         return [
             self.boundary[0][0],
             self.boundary[0][1],
@@ -40,8 +37,7 @@ class BoundaryConditions:
     def pml_bounds(
         self,
     ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
-        """
-        """
+        """ """
         return (
             (
                 pml_num_cells(self.boundary[0][0]),

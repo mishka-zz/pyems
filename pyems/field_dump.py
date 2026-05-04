@@ -28,8 +28,7 @@ class DumpType(Enum):
 
 
 class FieldDump:
-    """
-    """
+    """ """
 
     unique_index = 0
 
@@ -56,9 +55,7 @@ class FieldDump:
             dir_path = mkdtemp()
         else:
             dir_path = os.path.abspath(
-                os.path.join(
-                    self._sim.sim_dir, dir_path + "_" + str(self._index)
-                )
+                os.path.join(self._sim.sim_dir, dir_path + "_" + str(self._index))
             )
             if not os.path.exists(dir_path):
                 os.mkdir(dir_path)
@@ -70,38 +67,34 @@ class FieldDump:
             file_type=0,
         )
         construct_box(
-            prop=dump, box=self.box, priority=priorities["x"],
+            prop=dump,
+            box=self.box,
+            priority=priorities["x"],
         )
         self._sim.add_field_dump(self)
 
     @property
     def sim(self) -> Simulation:
-        """
-        """
+        """ """
         return self._sim
 
     @property
     def box(self) -> Box3:
-        """
-        """
+        """ """
         return self._box
 
     @property
     def dump_type(self) -> int:
-        """
-        """
+        """ """
         return self._dump_type.value[0]
 
     def view(self):
-        """
-        """
+        """ """
         subprocess.run(
             [
                 "paraview",
                 "--data={}".format(
-                    os.path.join(
-                        self._dir_path, self._dump_type.value[1] + "_..vtr"
-                    )
+                    os.path.join(self._dir_path, self._dump_type.value[1] + "_..vtr")
                 ),
             ]
         )

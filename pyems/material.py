@@ -5,14 +5,12 @@ from pyems.const import EPS0
 
 
 def loss_to_kappa(loss: float, freq: float, epsr: float) -> float:
-    """
-    """
+    """ """
     return loss * EPS0 * epsr * 2 * np.pi * freq
 
 
 class Dielectric:
-    """
-    """
+    """ """
 
     def __init__(
         self, epsr: List[Tuple[float, float]], loss: List[Tuple[float, float]]
@@ -46,13 +44,10 @@ class Dielectric:
         return float(table_interp_val(self._kappa, 1, freq, 0, True))
 
     def _kappa(self) -> List[Tuple[float, float]]:
-        """
-        """
+        """ """
         kappas = []
         for freq, loss in self._loss:
-            kappas.append(
-                (freq, loss_to_kappa(loss, freq, self.epsr_at_freq(freq)))
-            )
+            kappas.append((freq, loss_to_kappa(loss, freq, self.epsr_at_freq(freq))))
         return kappas
 
 

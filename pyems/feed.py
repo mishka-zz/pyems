@@ -57,14 +57,12 @@ class Feed:
 
     @property
     def sim(self) -> Simulation:
-        """
-        """
+        """ """
         return self._sim
 
     @property
     def box(self) -> Box3:
-        """
-        """
+        """ """
         return self._box
 
     def set_feed(self) -> None:
@@ -82,7 +80,9 @@ class Feed:
                 excitation.SetWeightFunction(self.weight_func)
 
             self.excitation_box = construct_box(
-                prop=excitation, box=self.box, priority=max_priority(),
+                prop=excitation,
+                box=self.box,
+                priority=max_priority(),
             )
 
         if self.impedance:
@@ -96,12 +96,13 @@ class Feed:
                 L=lval,
             )
             self.res_box = construct_box(
-                prop=res, box=self.box, priority=priorities["component"],
+                prop=res,
+                box=self.box,
+                priority=priorities["component"],
             )
 
     def pml_overlap(self) -> bool:
-        """
-        """
+        """ """
         if self.excitation_box is None and self.res_box is None:
             return False
 
@@ -112,8 +113,7 @@ class Feed:
         return False
 
     def _impedance_rcl(self) -> Tuple[float, float, float]:
-        """
-        """
+        """ """
         if np.iscomplex(self.impedance):
             warn("Only feed resistances are currently supported.")
 
@@ -159,20 +159,17 @@ class Feed:
 
     @classmethod
     def _get_ctr(cls):
-        """
-        """
+        """ """
         return cls.unique_ctr
 
     @classmethod
     def _inc_ctr(cls):
-        """
-        """
+        """ """
         cls.unique_ctr += 1
 
     @classmethod
     def _get_inc_ctr(cls):
-        """
-        """
+        """ """
         ctr = cls._get_ctr()
         cls._inc_ctr()
         return ctr

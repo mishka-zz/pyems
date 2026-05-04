@@ -28,8 +28,7 @@ def wheeler_z0(w: float, t: float, er: float, h: float) -> float:
             (4 * np.e)
             / (
                 np.sqrt(
-                    ((t / h) ** 2)
-                    + (((1 / np.pi) * ((1 / ((w / t) + (11 / 10))))) ** 2)
+                    ((t / h) ** 2) + (((1 / np.pi) * (1 / ((w / t) + (11 / 10)))) ** 2)
                 )
             )
         )
@@ -42,14 +41,7 @@ def wheeler_z0(w: float, t: float, er: float, h: float) -> float:
             tmp1
             * (
                 (tmp2 * tmp1)
-                + (
-                    np.sqrt(
-                        (
-                            (tmp2 * tmp1) ** 2
-                            + ((np.pi ** 2) * ((1 + (1 / er)) / 2))
-                        )
-                    )
-                )
+                + (np.sqrt(((tmp2 * tmp1) ** 2 + ((np.pi**2) * ((1 + (1 / er)) / 2)))))
             )
         )
     )
@@ -127,10 +119,7 @@ def pozar_z0(
         return (
             120
             * np.pi
-            / (
-                np.sqrt(eeff)
-                * (wh_ratio + 1.393 + 0.667 * np.log(wh_ratio + 1.444))
-            )
+            / (np.sqrt(eeff) * (wh_ratio + 1.393 + 0.667 * np.log(wh_ratio + 1.444)))
         )
 
 
@@ -168,13 +157,9 @@ def miter(trace_width: float, substrate_height: float) -> float:
     equation.
     """
     if trace_width / substrate_height < 0.25:
-        raise ValueError(
-            "Ratio of trace width to height must be at least 0.25."
-        )
+        raise ValueError("Ratio of trace width to height must be at least 0.25.")
     d = trace_width * np.sqrt(2)
-    x = d * (
-        0.52 + (0.65 * np.exp(-(27 / 20) * trace_width / substrate_height))
-    )
+    x = d * (0.52 + (0.65 * np.exp(-(27 / 20) * trace_width / substrate_height)))
     return x
 
 
@@ -188,9 +173,7 @@ def coax_core_diameter(
     :returns: Inner core diameter.  The units will match those of the
               provided outer diameter.
     """
-    return outer_diameter / np.power(
-        10, impedance * np.sqrt(permittivity) / 138
-    )
+    return outer_diameter / np.power(10, impedance * np.sqrt(permittivity) / 138)
 
 
 def microstrip_effective_dielectric(
@@ -248,14 +231,11 @@ def skin_depth(
     Compute the skin depth for a conductor at a given frequency.  The
     default values are for copper.
     """
-    return np.sqrt(
-        2 * resistivity / (2 * np.pi * frequency * rel_permeability * MUE0)
-    )
+    return np.sqrt(2 * resistivity / (2 * np.pi * frequency * rel_permeability * MUE0))
 
 
 def speed_of_light(unit: float) -> float:
-    """
-    """
+    """ """
     return C0 / unit
 
 
@@ -286,9 +266,7 @@ def sweep(func, params, processes: int = 5):
     return ret_vals
 
 
-def optimize_parameter(
-    func, start, step, tol, max_steps, display_progress=False
-):
+def optimize_parameter(func, start, step, tol, max_steps, display_progress=False):
     """
     Compute the lowest-cost value of a parameter that still produces
     accurate results.
@@ -311,9 +289,7 @@ def optimize_parameter(
     while i < max_steps:
         res_matrix[i] = np.array(func(start))
         diff = np.subtract(res_matrix[i], res_matrix[i - 1])
-        rms[i - 1] = np.sqrt(
-            np.sum(np.real(np.multiply(diff, np.conj(diff)))) / n
-        )
+        rms[i - 1] = np.sqrt(np.sum(np.real(np.multiply(diff, np.conj(diff)))) / n)
         if display_progress:
             num_steps = int(np.round((start - orig_start) / step) + 1)
             print_table(
@@ -339,19 +315,13 @@ def optimize_parameter(
                 rms_trend_down = True
 
             valid_start = orig_start + (rms_valid_index * step)
-            num_valid_steps = int(
-                np.round((start - step - valid_start) / step) + 1
-            )
+            num_valid_steps = int(np.round((start - step - valid_start) / step) + 1)
             try:
-                print(
-                    np.linspace(valid_start, start - step, num=num_valid_steps)
-                )
+                print(np.linspace(valid_start, start - step, num=num_valid_steps))
                 print(rms[rms_valid_index:i])
                 fit = curve_fit(
                     rms_fit,
-                    np.linspace(
-                        valid_start, start - step, num=num_valid_steps
-                    ),
+                    np.linspace(valid_start, start - step, num=num_valid_steps),
                     rms[rms_valid_index:i],
                 )
                 a = fit[0][0]
@@ -366,9 +336,7 @@ def optimize_parameter(
             except RuntimeError:
                 # If curve fitting fails, ignore the oldest RMS value
                 # and try again on the next iteration.
-                print(
-                    "Failed to fit curve to RMS values, ignoring oldest value."
-                )
+                print("Failed to fit curve to RMS values, ignoring oldest value.")
                 rms_valid_index += 1
 
         i += 1
@@ -381,8 +349,7 @@ def optimize_parameter(
 
 
 def rms_fit(x, a, b):
-    """
-    """
+    """ """
     return np.divide(a, np.power(np.subtract(x, b), 2))
 
 
@@ -439,8 +406,7 @@ def minimize(func, initial, tol, bounds=None):
     )
     if not res.success:
         raise RuntimeError(
-            "Minimization failed. See scipy.optimize.minimize "
-            "for other options."
+            "Minimization failed. See scipy.optimize.minimize for other options."
         )
 
     if len(res.x) == 1:

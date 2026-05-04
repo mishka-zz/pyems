@@ -38,8 +38,7 @@ class PCBProperties:
 
     @property
     def substrate(self) -> Dielectric:
-        """
-        """
+        """ """
         return self._substrate
 
     def copper_thickness(self, index: int, unit: float = 1) -> float:
@@ -71,13 +70,11 @@ class PCBProperties:
         return self.substrate_thick[index] / unit
 
     def via_plating_thickness(self, unit: float = 1) -> float:
-        """
-        """
+        """ """
         return self.via_plating_thick / unit
 
     def metal_conductivity(self) -> float:
-        """
-        """
+        """ """
         return self.metal_kappa
 
     def num_copper_layers(self) -> int:

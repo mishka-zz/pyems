@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from enum import Enum
 from bisect import bisect_left, bisect_right, insort_left
 from warnings import warn
@@ -10,7 +10,6 @@ from pyems.calc import wavelength
 from pyems.coordinate import Box3, Coordinate3, c3_from_dim
 from pyems.csxcad import add_line, construct_box, add_material
 from pyems.fp import (
-    fp_equalp,
     fp_nearest,
     fp_equalp,
     fp_ltp,
@@ -38,33 +37,26 @@ class BoundedType:
     dimension of a physical structure.
     """
 
-    def __init__(
-        self, prop_type: Type, lower_bound: float, upper_bound: float
-    ):
-        """
-        """
+    def __init__(self, prop_type: Type, lower_bound: float, upper_bound: float):
+        """ """
         self.prop_type = prop_type
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
     def get_type(self) -> Type:
-        """
-        """
+        """ """
         return self.prop_type
 
     def get_bounds(self) -> List[float]:
-        """
-        """
+        """ """
         return [self.lower_bound, self.upper_bound]
 
     def get_midpoint(self) -> float:
-        """
-        """
+        """ """
         return np.average([self.lower_bound, self.upper_bound])
 
     def size(self) -> float:
-        """
-        """
+        """ """
         return self.upper_bound - self.lower_bound
 
 
@@ -192,8 +184,7 @@ def _bounds_from_prims(
 
 
 def _float_inside(val: float, lower: float, upper: float) -> bool:
-    """
-    """
+    """ """
     if val >= lower and val <= upper:
         return True
     return False
@@ -246,9 +237,7 @@ def _geom_dist_zero(
     return _geom_dist(factor, num, smaller_spacing) - dist
 
 
-def _num_for_factor(
-    factor: float, smaller_spacing: float, dist: float
-) -> (float, int):
+def _num_for_factor(factor: float, smaller_spacing: float, dist: float) -> (float, int):
     """
     Find the closest number of terms in a geometric series with a
     given factor such that the sum of the geometric series equals
@@ -263,8 +252,7 @@ def _num_for_factor(
     """
     num = int(
         np.ceil(
-            np.log(1 - (((dist / smaller_spacing) + 1) * (1 - factor)))
-            / np.log(factor)
+            np.log(1 - (((dist / smaller_spacing) + 1) * (1 - factor))) / np.log(factor)
             + 1
         )
     )
@@ -301,9 +289,7 @@ def _geom_series(
     """
     num = np.max([int(np.ceil(dist / larger_spacing)) + 1, min_num])
     factor = _factor_for_num(num, smaller_spacing, dist)
-    while factor >= _factor_ubound(
-        num, larger_spacing / smaller_spacing, max_factor
-    ):
+    while factor >= _factor_ubound(num, larger_spacing / smaller_spacing, max_factor):
         num += 1
         factor = _factor_for_num(num, smaller_spacing, dist)
 
@@ -319,8 +305,7 @@ def _lines_const_factor_in_bounds(
     min_lines: int,
     smooth: float,
 ) -> np.array:
-    """
-    """
+    """ """
     # If the lower and upper spacings are roughly equal, make the
     # lines equidistant.
     if np.isclose(lower_spacing, upper_spacing, rtol=1e-3, atol=0):
@@ -376,8 +361,7 @@ def _spacings_at_dist_zero(
     total_dist: float,
     max_factor: float,
 ) -> float:
-    """
-    """
+    """ """
     spacing1 = _spacing_at_dist(lower_spacing, dist, max_factor)
     spacing2 = _spacing_at_dist(upper_spacing, total_dist - dist, max_factor)
     return spacing2 - spacing1
@@ -403,8 +387,7 @@ def _dist_for_max_spacings(
 
 
 def _pos_in_bounds(pos: float, lower: float, upper: float) -> bool:
-    """
-    """
+    """ """
     if fp_gep(pos, lower) and fp_lep(pos, upper):
         return True
     return False
@@ -470,9 +453,7 @@ def _dim_idx_to_desc(idx: int) -> str:
     raise ValueError("Index must be between 0 and 5, inclusive.")
 
 
-def _mesh_lines_in_box(
-    mesh_lines: List[List[float]], box: Box3
-) -> List[List[float]]:
+def _mesh_lines_in_box(mesh_lines: List[List[float]], box: Box3) -> List[List[float]]:
     """
     All mesh line positions within a box.
 
@@ -488,9 +469,7 @@ def _mesh_lines_in_box(
         upper_pos = box.max_corner[dim]
         dim_lines = mesh_lines[dim]
         dim_lines_inside = dim_lines[
-            bisect_left(dim_lines, lower_pos) : bisect_right(
-                dim_lines, upper_pos
-            )
+            bisect_left(dim_lines, lower_pos) : bisect_right(dim_lines, upper_pos)
         ]
         mesh_lines_inside.append(dim_lines_inside)
 
@@ -512,9 +491,11 @@ class Mesh:
         nonmetal_res=1 / 10,
         smooth: Tuple[float, float, float] = (1.2, 1.2, 1.2),
         min_lines: int = 5,
-        expand_bounds: Tuple[
-            Tuple[int, int], Tuple[int, int], Tuple[int, int]
-        ] = ((8, 8), (8, 8), (8, 8)),
+        expand_bounds: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]] = (
+            (8, 8),
+            (8, 8),
+            (8, 8),
+        ),
         simulation_bounds: Tuple[
             Tuple[float, float], Tuple[float, float], Tuple[float, float]
         ] = None,
@@ -595,8 +576,7 @@ class Mesh:
 
     @property
     def sim(self) -> Simulation:
-        """
-        """
+        """ """
         return self._sim
 
     def generate_mesh(self, show_pml: bool = True):
@@ -657,9 +637,7 @@ class Mesh:
             last_spacing = lines[1] - lines[0]
             for i in range(2, len(lines)):
                 spacing = lines[i] - lines[i - 1]
-                factor = np.maximum(
-                    spacing / last_spacing, last_spacing / spacing
-                )
+                factor = np.maximum(spacing / last_spacing, last_spacing / spacing)
                 if not factor < smoothness:
                     warn(
                         (
@@ -710,15 +688,9 @@ class Mesh:
                     - self.mesh_lines[dim][idx_lower - 1]
                 )
             smooth_factor = self.smooth[dim]
-            if (
-                spacing > limit_spacing
-                and spacing / limit_spacing >= smooth_factor
-            ):
+            if spacing > limit_spacing and spacing / limit_spacing >= smooth_factor:
                 spacing = limit_spacing * smooth_factor
-            elif (
-                spacing < limit_spacing
-                and limit_spacing / spacing >= smooth_factor
-            ):
+            elif spacing < limit_spacing and limit_spacing / spacing >= smooth_factor:
                 raise RuntimeError(
                     "PML mesh smoothing is increasing the simulation "
                     "box size.  This should never happen.  Either "
@@ -736,9 +708,7 @@ class Mesh:
             else:
                 init_pos = lines[-1]
                 spacing *= -1
-            new_lines = sorted(
-                [init_pos + i * spacing for i in range(num_lines)]
-            )
+            new_lines = sorted([init_pos + i * spacing for i in range(num_lines)])
             # only clear lines in the new range because we will have
             # to generate new lines between the border of this new
             # line boundary and the nearest BoundedType border. The
@@ -765,9 +735,7 @@ class Mesh:
 
                 lower_spacing = spacing
                 line_below_idx, line_below = self._line_below(dim, other_bound)
-                upper_spacing = (
-                    self.mesh_lines[dim][line_below_idx + 1] - line_below
-                )
+                upper_spacing = self.mesh_lines[dim][line_below_idx + 1] - line_below
                 redo_lines = _lines_const_factor_in_bounds(
                     existing_bound,
                     line_below,
@@ -794,9 +762,7 @@ class Mesh:
                 # spacing was negative for new_lines
                 upper_spacing = np.abs(spacing)
                 line_above_idx, line_above = self._line_above(dim, other_bound)
-                lower_spacing = (
-                    line_above - self.mesh_lines[dim][line_above_idx - 1]
-                )
+                lower_spacing = line_above - self.mesh_lines[dim][line_above_idx - 1]
                 redo_lines = _lines_const_factor_in_bounds(
                     line_above,
                     existing_bound,
@@ -848,9 +814,7 @@ class Mesh:
                                 (
                                     "{} PML does not contain uniform structure."
                                     " Offending coordinate is ({}, {}, {})"
-                                ).format(
-                                    _dim_idx_to_desc(i), dim_pos, pos1, pos2
-                                )
+                                ).format(_dim_idx_to_desc(i), dim_pos, pos1, pos2)
                             )
 
     def _trim_air_mesh(self) -> None:
@@ -874,17 +838,11 @@ class Mesh:
                 pos = self._highest_nonair_pos(dim)
                 mesh_idx, _ = self._line_above(dim, pos)
                 if len(self.mesh_lines[dim]) - 1 - mesh_idx > upper_pml_cells:
-                    del_num = (
-                        len(self.mesh_lines[dim])
-                        - 1
-                        - mesh_idx
-                        - upper_pml_cells
-                    )
+                    del_num = len(self.mesh_lines[dim]) - 1 - mesh_idx - upper_pml_cells
                     del self.mesh_lines[dim][-del_num:]
 
     def _lowest_nonair_pos(self, dim: int) -> float:
-        """
-        """
+        """ """
         lowest_pos = None
         for btype in self.bounded_types[dim]:
             if btype.get_type() != Type.air and (
@@ -894,8 +852,7 @@ class Mesh:
         return lowest_pos
 
     def _highest_nonair_pos(self, dim: int) -> float:
-        """
-        """
+        """ """
         highest_pos = None
         for btype in self.bounded_types[dim]:
             if btype.get_type() != Type.air and (
@@ -904,9 +861,7 @@ class Mesh:
                 highest_pos = btype.upper_bound
         return highest_pos
 
-    def _show_pml(
-        self, boxes: Tuple[Box3, Box3, Box3, Box3, Box3, Box3]
-    ) -> None:
+    def _show_pml(self, boxes: Tuple[Box3, Box3, Box3, Box3, Box3, Box3]) -> None:
         """
         Add primitives so that PML boundaries are displayed in
         AppCSXCAD.  Even though these are material properties, they're
@@ -926,7 +881,9 @@ class Mesh:
                     alpha=200,
                 )
                 construct_box(
-                    prop=pml_prop, box=box, priority=priorities["x"],
+                    prop=pml_prop,
+                    box=box,
+                    priority=priorities["x"],
                 )
 
     def pml_boxes(self) -> Tuple[Box3, Box3, Box3, Box3, Box3, Box3]:
@@ -1039,8 +996,7 @@ class Mesh:
         self.sim.post_mesh()
 
     def sim_box(self, include_pml: bool = True) -> Box3:
-        """
-        """
+        """ """
         pml_cells = self.sim.boundary_conditions.pml_bounds()
         if include_pml:
             return Box3(
@@ -1071,8 +1027,7 @@ class Mesh:
     def _gen_mesh_for_bounded_types(
         self, bounded_types: List[List[BoundedType]]
     ) -> None:
-        """
-        """
+        """ """
         for dim, btypes in enumerate(bounded_types):
             for btype in btypes:
                 lower = btype.get_bounds()[0]
@@ -1085,11 +1040,8 @@ class Mesh:
                 )
                 self._add_to_ranges_meshed(dim, lower, upper)
 
-    def _add_to_ranges_meshed(
-        self, dim: int, lower: float, upper: float
-    ) -> None:
-        """
-        """
+    def _add_to_ranges_meshed(self, dim: int, lower: float, upper: float) -> None:
+        """ """
         self.ranges_meshed[dim].append([lower, upper])
         # TODO
         # self._consolidate_meshed_ranges(dim)
@@ -1102,8 +1054,7 @@ class Mesh:
         self._range_union(dim)
 
     def _range_union(self, dim: int, start_idx: int = 0):
-        """
-        """
+        """ """
         while start_idx + 1 <= len(self.ranges_meshed[dim]) - 1:
             if (
                 self.ranges_meshed[dim][start_idx][1]
@@ -1120,29 +1071,25 @@ class Mesh:
                 start_idx += 1
 
     def _type_above(self, dim: int, upper: float) -> Type:
-        """
-        """
+        """ """
         for btype in self.bounded_types[dim]:
             if btype.get_bounds()[0] == upper:
                 return btype.get_type()
 
     def _type_above_meshed(self, dim: int, upper: float) -> bool:
-        """
-        """
+        """ """
         for btype in self.bounded_types[dim]:
             if btype.get_bounds()[0] == upper and btype.size() != 0:
                 return self._pos_meshed(dim, btype.get_midpoint())
 
     def _type_below(self, dim: int, lower: float) -> Type:
-        """
-        """
+        """ """
         for btype in self.bounded_types[dim]:
             if btype.get_bounds()[1] == lower:
                 return btype.get_type()
 
     def _type_below_meshed(self, dim: int, lower: float) -> bool:
-        """
-        """
+        """ """
         for btype in self.bounded_types[dim]:
             if btype.get_bounds()[1] == lower and btype.size() != 0:
                 return self._pos_meshed(dim, btype.get_midpoint())
@@ -1209,29 +1156,25 @@ class Mesh:
 
         lower_spacing = None
         if lower != 0:
-            lower_spacing = self.get_mesh_line(
-                dim, lower
-            ) - self.get_mesh_line(dim, lower - 1)
+            lower_spacing = self.get_mesh_line(dim, lower) - self.get_mesh_line(
+                dim, lower - 1
+            )
 
         upper_spacing = None
         if upper != len(self.mesh_lines[dim]) - 1:
-            upper_spacing = self.get_mesh_line(
-                dim, upper + 1
-            ) - self.get_mesh_line(dim, upper)
+            upper_spacing = self.get_mesh_line(dim, upper + 1) - self.get_mesh_line(
+                dim, upper
+            )
 
         num_spaces = upper - lower
         lower_pos = self.get_mesh_line(dim, lower)
         upper_pos = self.get_mesh_line(dim, upper)
         spacing = (upper_pos - lower_pos) / num_spaces
 
-        if (
-            lower_spacing and abs(lower_spacing - spacing) > self.smooth[dim]
-        ) or (
+        if (lower_spacing and abs(lower_spacing - spacing) > self.smooth[dim]) or (
             upper_spacing and abs(upper_spacing - spacing) > self.smooth[dim]
         ):
-            raise RuntimeError(
-                "Can't set equidistant lines and keep smoothness."
-            )
+            raise RuntimeError("Can't set equidistant lines and keep smoothness.")
 
         self._clear_mesh_in_bounds(lower_pos, upper_pos, dim)
         new_lines = np.linspace(lower_pos, upper_pos, num_spaces + 1)
@@ -1357,8 +1300,7 @@ class Mesh:
         return False
 
     def _min_spacing(self, dist: float) -> float:
-        """
-        """
+        """ """
         return dist / (self.min_lines - 1)
 
     def _lower_spacing(
@@ -1381,9 +1323,7 @@ class Mesh:
 
         if line_below and self._type_below_meshed(dim, lower):
             factor = 1
-            if self._is_metal_bound(dim, lower) and not self._is_fixed_line(
-                dim, lower
-            ):
+            if self._is_metal_bound(dim, lower) and not self._is_fixed_line(dim, lower):
                 if self._type_below(dim, lower) == Type.nonmetal:
                     factor = 3 / 2
                 else:
@@ -1413,9 +1353,7 @@ class Mesh:
 
         if line_above and self._type_above_meshed(dim, upper):
             factor = 1
-            if self._is_metal_bound(dim, upper) and not self._is_fixed_line(
-                dim, upper
-            ):
+            if self._is_metal_bound(dim, upper) and not self._is_fixed_line(dim, upper):
                 if self._type_above(dim, upper) == Type.nonmetal:
                     factor = 3 / 2
                 else:
@@ -1453,12 +1391,8 @@ class Mesh:
         # large we assume we haven't meshed the adjacent structure and
         # ignore it.
         dist = upper - lower
-        lower_spacing = self._lower_spacing(
-            dim, lower, line_below, dist, is_metal
-        )
-        upper_spacing = self._upper_spacing(
-            dim, upper, line_above, dist, is_metal
-        )
+        lower_spacing = self._lower_spacing(dim, lower, line_below, dist, is_metal)
+        upper_spacing = self._upper_spacing(dim, upper, line_above, dist, is_metal)
         if is_metal:
             max_spacing = self.metal_res
         else:
@@ -1542,13 +1476,11 @@ class Mesh:
             self._add_lines_to_mesh(lines, dim)
 
     def _is_fixed_line(self, dim: int, pos: float) -> bool:
-        """
-        """
+        """ """
         return pos in self.fixed_lines[dim]
 
     def _is_metal_bound(self, dim: int, pos: float) -> bool:
-        """
-        """
+        """ """
         return pos in self.metal_bounds[dim]
 
     def _pos_meshed(self, dim: int, pos: float) -> bool:
@@ -1631,8 +1563,8 @@ class Mesh:
         mid_spacing = np.min(
             [
                 max_spacing,
-                lower_spacing * (lower_factor ** lower_num),
-                upper_spacing * (upper_factor ** upper_num),
+                lower_spacing * (lower_factor**lower_num),
+                upper_spacing * (upper_factor**upper_num),
             ]
         )
 
@@ -1671,9 +1603,7 @@ class Mesh:
         for line in lines:
             self._add_mesh_line(dim, line)
 
-        self.mesh_lines[dim] = _remove_dups(
-            self.mesh_lines[dim], self.fixed_lines[dim]
-        )
+        self.mesh_lines[dim] = _remove_dups(self.mesh_lines[dim], self.fixed_lines[dim])
 
     def _add_mesh_line(self, dim: int, pos: float) -> None:
         """
@@ -1714,14 +1644,12 @@ class Mesh:
         self.smallest_res = np.min([self.smallest_res, new_res])
 
     def add_fixed_line(self, dim: int, pos: float) -> None:
-        """
-        """
+        """ """
         self.fixed_lines[dim].append(pos)
         self.fixed_lines[dim].sort()
 
     def _set_fixed_lines(self, prims: List[CSPrimitives]) -> None:
-        """
-        """
+        """ """
         for prim in prims:
             prim_bounds = _get_prim_bounds(prim)
             for dim in range(3):
@@ -1735,8 +1663,7 @@ class Mesh:
     def _bounded_types(
         self, bounds: List[List[float]], prims: List[CSPrimitives]
     ) -> List[List[BoundedType]]:
-        """
-        """
+        """ """
         bounded_types = [[], [], []]
         for dim, dim_bounds in enumerate(bounds):
             last_bound = None
@@ -1784,14 +1711,10 @@ class Mesh:
                     )
                 else:
                     if not fp_equalp(bounds[0], existing_lower):
-                        btype = BoundedType(
-                            Type.air, bounds[0], existing_lower
-                        )
+                        btype = BoundedType(Type.air, bounds[0], existing_lower)
                         bounded_types[dim].insert(0, btype)
                     if not fp_equalp(bounds[1], existing_upper):
-                        btype = BoundedType(
-                            Type.air, existing_upper, bounds[1]
-                        )
+                        btype = BoundedType(Type.air, existing_upper, bounds[1])
                         bounded_types[dim].append(btype)
         else:
             for dim in range(3):
@@ -1800,15 +1723,11 @@ class Mesh:
                 expand_lower = self.expand_bounds[dim][0]
                 expand_upper = self.expand_bounds[dim][-1]
                 if expand_lower != 0:
-                    new_low = existing_lower - (
-                        self.nonmetal_res * expand_lower
-                    )
+                    new_low = existing_lower - (self.nonmetal_res * expand_lower)
                     btype = BoundedType(Type.air, new_low, existing_lower)
                     bounded_types[dim].insert(0, btype)
                 if expand_upper != 0:
-                    new_high = existing_upper + (
-                        self.nonmetal_res * expand_upper
-                    )
+                    new_high = existing_upper + (self.nonmetal_res * expand_upper)
                     btype = BoundedType(Type.air, existing_upper, new_high)
                     bounded_types[dim].append(btype)
 
@@ -1820,9 +1739,7 @@ class Mesh:
 
         return bounded_types
 
-    def _set_metal_bounds(
-        self, bounded_types: List[List[BoundedType]]
-    ) -> None:
+    def _set_metal_bounds(self, bounded_types: List[List[BoundedType]]) -> None:
         """
         Set the metal boundaries based on the bounded types.  Ignore
         zero-length metals, which aren't metal bounds which require
