@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "simulation": {
+    "freq_range": [8e9, 12e9],
+    "boundary_conditions": [
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 }
+    ],
+    "unit": 1e-3
+  },
+  "materials": [
+    { "name": "PEC", "kind": "metal" }
+  ],
+  "primitives": [
+    { "type": "box", "material": "PEC", "start": [0, -12.5, -6], "stop": [50, 12.5, -5], "source_label": "BottomWall" },
+    { "type": "box", "material": "PEC", "start": [0, -12.5, 5], "stop": [50, 12.5, 6], "source_label": "TopWall" },
+    { "type": "box", "material": "PEC", "start": [0, -12.5, -5], "stop": [50, -11.5, 5], "source_label": "LeftWall" },
+    { "type": "box", "material": "PEC", "start": [0, 11.5, -5], "stop": [50, 12.5, 5], "source_label": "RightWall" }
+  ],
+  "ports": [
+    {
+      "type": "rect_waveguide",
+      "number": 1,
+      "excite": true,
+      "box": { "start": [0, -11.5, -5], "stop": [1, 11.5, 5] },
+      "propagation_axis": { "axis": 0, "direction": 1 },
+      "mode": "TE10",
+      "source_label": "Feed"
+    }
+  ],
+  "nf2ff": [
+    {
+      "box": { "start": [-5, -20, -15], "stop": [55, 20, 15] },
+      "theta_points": 91,
+      "phi_points": 181,
+      "frequencies": [10e9]
+    }
+  ],
+  "excitations": [
+    { "active_ports": [1] }
+  ]
+}

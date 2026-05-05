@@ -1,7 +1,6 @@
 from tempfile import mkdtemp
 from enum import Enum
 import os
-import subprocess
 from pyems.simulation import Simulation
 from pyems.coordinate import Box3
 from pyems.csxcad import construct_box
@@ -87,17 +86,6 @@ class FieldDump:
     def dump_type(self) -> int:
         """ """
         return self._dump_type.value[0]
-
-    def view(self):
-        """ """
-        subprocess.run(
-            [
-                "paraview",
-                "--data={}".format(
-                    os.path.join(self._dir_path, self._dump_type.value[1] + "_..vtr")
-                ),
-            ]
-        )
 
     @classmethod
     def _get_ctr(cls):

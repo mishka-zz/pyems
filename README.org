@@ -1,13 +1,13 @@
 * Table of Contents
-1. [[https://github.com/matthuszagh/pyems#about][About]]
-2. [[https://github.com/matthuszagh/pyems#installation][Installation]]
-3. [[https://github.com/matthuszagh/pyems#tutorial][Tutorial]]
-4. [[https://github.com/matthuszagh/pyems#usage][Usage]]
-5. [[https://github.com/matthuszagh/pyems#automatic-mesh-generation-algorithm][Automatic Mesh Generation Algorithm]]
+1. [[#about][About]]
+2. [[#installation][Installation]]
+3. [[#tutorial][Tutorial]]
+4. [[#usage][Usage]]
+5. [[#automatic-mesh-generation-algorithm][Automatic Mesh Generation Algorithm]]
 
 * About
-Pyems is a Python interface to the electromagnetic field solver,
-[[https://openems.de/start/index.php][OpenEMS]]. It uses OpenEMS's own Python interface to hook into [[https://github.com/thliebig/CSXCAD][CSXCAD]]
+Pyems is a high-level, headless Python interface to the electromagnetic field
+solver, [[https://openems.de/start/index.php][OpenEMS]]. It uses OpenEMS's own Python interface to hook into [[https://github.com/thliebig/CSXCAD][CSXCAD]]
 and [[https://github.com/thliebig/openEMS][OpenEMS]]. However, unlike that interface, whose primary purpose is
 to expose the underlying C++ interface as a Python API, pyems provides
 high-level functionality intended to facilitate and accelerate the
@@ -18,368 +18,97 @@ algorithm. Pyems attempts (when possible) to enforce correct usage in
 these situations and in other cases to make the usage tradeoffs more
 visible.
 
+Pyems focuses on being a robust translation and meshing engine. It is designed
+to be easily integrated into automated design flows or driven by external CAD
+tools via its declarative API.
+
 To accomplish this goal, pyems provides:
 1. Configurable, automatic mesh generation.
-2. [[https://kicad.org/][KiCad]] footprint creation.
-3. Simple port impedance and S-parameter calculations.
-4. A collection of cooperative classes for building commonly-needed
-   microwave structures (many of which are PCB-based).
-5. Functions performing frequently-needed calculations involved with
+2. Simple port impedance and S-parameter calculations.
+3. A collection of low-level port classes (Microstrip, Coax, Waveguide)
+   designed for reliable EM excitation and measurement.
+4. Functions performing frequently-needed calculations involved with
    microwave design.
-6. Methods to optimize a simulation structure to achieve a desired
+5. Methods to optimize a simulation structure to achieve a desired
    result for any arbitrary parameter.
-7. A simple, expressive interface intended to make the simulation
-   process more intuitive.
-
-Although ease of use is one of pyems's primary goals, another one of
-its major goals is to not restrict the power of OpenEMS. To this
-effect, the underlying OpenEMS Python interface is still directly
-accessible to the user. Indeed, there are cases in which it is
-necessary to use the OpenEMS interface (e.g. applying transformations
-and constructing some simple shapes). Additionally, there are some
-cases where the interface has been designed to allow feature
-accessibility in a way that can be misused by the casual user. Pyems
-will always prioritize expressivity over protection against
-misuse. These cases should be properly documented.
+6. A JSON-based bridge (~pyems.runner~) for driving simulations from
+   external environments.
 
 * Installation
-Pypi installation is planned but not yet available. Pyems must
-currently be installed manually. It requires a working installation of
-OpenEMS, including its Python interfaces for CSXCAD and OpenEMS. Pyems
-also requires the [[https://numpy.org/][NumPy]] and [[https://scipy.org/][SciPy]] Python libraries. If you'd like to
-view simulation field dumps (recommended) you must also have a copy of
-[[https://www.paraview.org/][ParaView]]. All of this software is (of course) open source and free to
+Pyems requires a working installation of OpenEMS, including its Python
+interfaces for CSXCAD and OpenEMS. Pyems also requires the [[https://numpy.org/][NumPy]],
+[[https://scipy.org/][SciPy]], and [[https://pypi.org/project/jsonschema/][jsonschema]] Python libraries.
+
+To install pyems for development:
+#+begin_src bash
+cd pyems
+pip install -e .
+#+end_src
+
+If you'd like to view simulation field dumps (recommended) you must also have a
+copy of [[https://www.paraview.org/][ParaView]]. All of this software is (of course) open source and free to
 download and use.
 
 * Tutorial
-I have not yet written a proper reference documentation for pyems. To
-help new users get acquainted with it, I've written a tutorial
-presented in this section. This should help users understand the API
-and what can be done with pyems. Additionally, there are numerous
-examples present in the [[https://github.com/matthuszagh/pyems/tree/master/examples][examples]] directory that can be
-referenced. Finally, I've made a significant effort to thoroughly
-document class initialization and function parameters in
-docstrings. Please reference them and file bugs when ambiguities
-exist.
-
-This tutorial will describe how to simulate a [[https://en.wikipedia.org/wiki/Power_dividers_and_directional_couplers#Directional_couplers][directional coupler]]
-fabricated on the top layer of a PCB fabricated with [[https://docs.oshpark.com/services/four-layer/][OSHPark's 4-layer
-process]]. The simulation file is available [[https://github.com/matthuszagh/pyems/blob/master/examples/coupler.py][in the examples
-directory]]. The user will be able to view the simulation structure as
-well as a movie of the current density. The post-simulation analysis
-will include the calculated scattering parameters for all 4
-ports. Finally, the simulation will generate a PCB footprint that can
-be imported directly into KiCAD.
+The following tutorial describes how to simulate a simple microstrip line using
+the pyems Python API. While pyems can also be driven via JSON, understanding the
+Python API is helpful for understanding the underlying concepts.
 
 #+begin_src python
 import numpy as np
-from pyems.structure import Microstrip, PCB, MicrostripCoupler
 from pyems.simulation import Simulation
-from pyems.pcb import common_pcbs
-from pyems.calc import phase_shift_length, microstrip_effective_dielectric
-from pyems.utilities import print_table
-from pyems.coordinate import Coordinate2, Axis, Box3, Coordinate3
 from pyems.mesh import Mesh
-from pyems.field_dump import FieldDump, DumpType
-from pyems.kicad import write_footprint
+from pyems.port import MicrostripPort
+from pyems.coordinate import Axis, Box3, Coordinate3
 
-freq = np.linspace(0e9, 18e9, 501)
-ref_freq = 5.6e9
+freq = np.linspace(0e9, 10e9, 101)
 unit = 1e-3
-sim = Simulation(freq=freq, unit=unit, reference_frequency=ref_freq)
+sim = Simulation(freq=freq, unit=unit)
 #+end_src
 
 This first code block instantiates a ~Simulation()~
 object. ~Simulation~ initializes the underlying OpenEMS objects for
 the simulation structure and the FDTD algorithm. ~freq~ specifies the
-frequency values to simulate. This simulation uses a granularity of
-501 values from DC to 18GHz. The post-simulation analysis results
+frequency values to simulate. The post-simulation analysis results
 (such as the S-parameters) will be given for these frequency
 values. Bear in mind that using a smaller granularity results in a
 longer simulation time. ~unit~ specifies the length unit to use in
 meters. By using ~1e-3~, we've told pyems that all of our subsequent
 dimensions will be given in mm.
 
-Certain dielectric properties are frequency-dependent. However,
-OpenEMS requires that all dielectric properties be constant in a
-simulation. The ~reference_frequency~ parameter specifies the
-frequency used to determine these values. It can be ommitted in which
-case the center frequency of ~freq~ is used.
-
-~Simulation~ also takes a number of other parameters. They have been
-given reasonable defaults but will sometimes need to be changed. See
-the code documentation for these parameters. In particular, it will
-frequently be necessary to specify the ~boundary_conditions~
-parameter.
-
 #+begin_src python
-pcb_prop = common_pcbs["oshpark4"]
-trace_width = 0.38
-trace_spacing = 0.2
-eeff = microstrip_effective_dielectric(
-    pcb_prop.substrate.epsr_at_freq(ref_freq),
-    substrate_height=pcb_prop.substrate_thickness(0, unit=unit),
-    trace_width=trace_width,
+# Define a microstrip port
+port1_box = Box3(
+    Coordinate3(-10, -1.5, 0),
+    Coordinate3(10, 1.5, 0)
 )
-coupler_length = phase_shift_length(90, eeff, ref_freq)
-print("coupler_length: {:.4f}".format(coupler_length))
-#+end_src
 
-~pcb_prop~ is an object that contains details about the OSHPark
-4-layer process. It knows the thickness of all metal and dielectric
-layers as well as the dielectric frequency-dependent electrical
-properties. Only a few PCB processes are supported at the moment, but
-more will be added in the future.
-
-~eeff~ is the effective dielectric of the top PCB layer. It correctly
-accounts for the fact that the microstrip is bounded below by the
-substrate and above by air.
-
-~coupler_length~ is the length (in our chosen unit, which is mm)
-required for a signal (specified by the reference frequency) to
-undergo a quarter-wavelength phase shift. Since this coupler is a
-backward-wave directional coupler, the quarter wave maximizes the
-coupling coefficient and bandwidth at our reference frequency.
-
-The effective dielectric equation (and by virtue the coupler length)
-is approximate, not based on a proper simulation. Although the
-approximation should be more than adequate for most cases, we could
-optimize the length later (and calculate a more precise effective
-dielectric) with the OpenEMS simulation if we wanted.
-
-#+begin_src python
-pcb_len = 2 * coupler_length
-pcb_width = 0.5 * pcb_len
-pcb = PCB(
+MicrostripPort(
     sim=sim,
-    pcb_prop=pcb_prop,
-    length=pcb_len,
-    width=pcb_width,
-    layers=range(3),
-    omit_copper=[0],
-)
-#+end_src
-
-~PCB~ creates a PCB object as part of the simulation structure. ~PCB~
-is our first example of what pyems refers to as a structure, which is
-a collection of primitives (the OpenEMS terminology for simple shapes
-with associated electrical properties) and other pyems structures that
-present a useful abstraction as a single object. In practice,
-structures allow you to quickly instantiate frequently-needed physical
-objects while using OpenEMS best-practices. They also make it easy to
-apply transformations (physical rotations and translations) to these
-objects.
-
-Structures play well together. For instance, there is a via structure
-which requires an associated PCB structure. Instead of having to worry
-about the 3-dimensional position and orientation of the via, you can
-simply specify its 2-dimensional coordinates on the PCB. The via will
-then be automatically oriented correctly on the PCB.
-
-The via also serves to illustrate the benefits of structures over the
-underlying OpenEMS primitives. Instead of having to instantiate a
-cylinder for the via drill, another cylinder or cylindrical shell for
-the via plating and then flat cylindrical shells for the each of the
-pads and antipads, we can simply instantiate a ~Via~ object with the
-desired attributes. Pyems fully supports blind and buried vias too, as
-well as physically-inaccurate approximations of vias that shorten
-simulation time.
-
-Let's return to the PCB object we instantiated above. This is a core
-structure of many simulations, since many simulations instantiate
-microwave structures on a PCB. We must tell the PCB object what
-process we are using (so that it can automatically determine certain
-dimensional and electrical properties) as well as the simulation
-object we instantiated at the beginning. Additionally, we must specify
-the x-dimensional length and y-dimensional width of the PCB. Although
-our PCB process is a 4-layer process, by building a microstrip
-directional coupler, we really only care about the first and second
-metal layers and the substrate layer in-between. This is what the
-~layers~ parameter does. ~range(3)~ specifies that we only want to
-include layers 0, 1, and 2, where 0 and 2 correspond to the first and
-second metal layers and 1 corresponds to the top substrate layer. This
-is an important feature since it leads to shorter simulation times
-with virtually zero accuracy cost. By default all layers are
-included. Pyems does not presently support layers other than
-dielectric and metal layers (such as soldermask or silkscreen
-layers). These may be added later if desired.
-
-Finally, ~PCB~ by default fills all metal layers with a copper
-pour. This is often useful and obviates the need for the user to do
-this manually. We can use the ~omit_copper~ parameter to specify metal
-layers where all the metal should be etched away. Although the
-~layers~ and ~omit_copper~ parameters may seem similar, there are a
-few subtle differences. Firstly, ~layers~ requires a Python ~range~
-object wherease ~omit_copper~ requires a list. While it is reasonable
-for us to include/disclude a copper pour on any metal layer, it
-doesn't make sense for us to use construct our PCB from the first and
-second metal layers and the second substrate layer (omitting the first
-substrate layer). Secondly, ~layers~ considers all layers (metal and
-dielectric) when considering indices for the layers. By contrast,
-~omit_copper~ only cares about the metal layers and thus ignores
-dielectric layers. As a result, the first and second metal layers are
-indicated by 0 and 2 when passed to ~layers~ and by 0 and 1 when
-passed to ~omit_copper~.
-
-#+begin_src python
-coupler = MicrostripCoupler(
-    pcb=pcb,
-    position=Coordinate2(0, 0),
-    trace_layer=0,
-    gnd_layer=1,
-    trace_width=trace_width,
-    trace_gap=trace_spacing,
-    length=coupler_length,
-    miter=None,
-)
-#+end_src
-
-~MicrostripCoupler~ instantiates coupled microstrip lines. It is
-another example of a pyems structure. It acquires information about
-the PCB object and simulation via the ~pcb~ parameter, since
-microstrip couplers will always be instantiated on a PCB. ~position~
-specifies its center position. ~trace_layer~ and ~gnd_layer~ specify
-the PCB metal layers of the trace and backing ground
-plane. ~trace_width~ is the width of each microstrip and ~trace_gap~
-is the perpendicular distance between the inside of each
-trace. ~length~ is the x-dimensional length, which we set to the
-desired coupler length. The last parameter, ~miter~ specifies the
-amount to miter the corners of ports 3 and 4. By specifying ~None~
-we've chosen an approximate, optimial miter (see the ~Miter~ structure
-for more information). The use of ~miter~ here may be changed in the
-future for something more general, since it is conceivable that a user
-might not want to miter these corners, or do something else to them
-like rounding. It is worth mentioning that ~MicrostripCoupler~ also
-takes a transform parameter that we could use to rotate it.
-
-#+begin_src python
-coupler_port_positions = coupler.port_positions()
-port0_x = coupler_port_positions[0].x
-port0_y = coupler_port_positions[0].y
-
-Microstrip(
-    pcb=pcb,
-    position=Coordinate2(np.average([port0_x, -pcb_len / 2]), port0_y),
-    length=port0_x + pcb_len / 2,
-    width=trace_width,
-    propagation_axis=Axis("x"),
-    port_number=1,
+    box=port1_box,
+    propagation_axis=Axis("x", direction=1),
+    excitation_axis=Axis("z", direction=1),
+    number=1,
+    thickness=0.035,
     excite=True,
-    ref_impedance=50,
-    feed_shift=0.3,
+    ref_impedance=50
 )
 #+end_src
 
-~Microstrip~ creates a microstrip port. ~Microstrip~ is another
-structure, but it is also an example of another important concept in
-pyems: a port. Ports are conceptually identical to the OpenEMS concept
-(and there is a significant degree of overlap in the implementation)
-except that they integrate better with the rest of pyems. A port is
-essentially a point of interface to the outside world. Ports are
-locations where signal excitations are created and where voltages and
-currents are measured.
-
-The notion of ports used here is analogous to the notion of ports used
-by a VNA. For instance (although it is not the case in this
-simulation) we might have added SMA connectors at each port (pyems
-provides a structure for this too). Then, if we wanted to measure S₂₁
-we'd terminate ports 3 and 4 with matching loads, attach the
-transmission port of the VNA to port 1 via an SMA cable and the other
-port of the VNA (assuming a 2-port VNA) to port 2. If the VNA is
-properly calibrated for the SMA cables, it will measure the signal as
-"starting" at the SMA connector of port 1 and "ending" at the SMA
-connector of port 2. Pyems will do exactly the same thing and should
-yield the same results.
-
-There are a few aspects to the instantiation of ~Microstrip~ that
-indicate this is used as a port. The first (and most obvious) is
-~port_number~. As should be evident, this tells the simulation that
-this microstrip structure acts as port 1. The numbering will be
-important in the post-simulation analysis when calculating our
-S-parameters. Next, the ~excite~ parameter tells the simulation that
-we'd like to perform a signal excitation at this port. The excitation
-is a Gaussian excitation whose frequency range is determined by the
-~Simulation~ ~freq~ parameter used at the beginning of this
-tutorial. ~ref_impedance~ specifies the impedance value to use when
-calculating the port's voltage and current values. We could also have
-omitted this parameter in which case the calculated value of the
-microstrip's characteristic impedance would have been used. Typically,
-this should be set to the desired characteristic impedance as is done
-here. ~feed_shift~ specifies the position of the signal excitation
-along the port as a fraction of the port length. The feed needs to be
-placed far enough along the port such that it is not contained within
-a boundary (see the [[http://openems.de/index.php/FDTD_Boundary_Conditions][OpenEMS documentation for boundary
-conditions]]). Pyems will notify you if the excitation is placed in a
-boundary.
-
-The ~propagation_axis~ parameter specifies the direction the port
-faces. Because of the way the FDTD [[https://en.wikipedia.org/wiki/Regular_grid][rectilinear grid]] works, we cannot
-place the port in any arbitrary orientation. Finally, we can see that
-the ~position~ and ~length~ parameters were used to place the port as
-extending from the lowermost x-position of the PCB to the edge of the
-~MicrostripCoupler~ structure.
-
-#+begin_src python
-port1_x = coupler_port_positions[1].x
-Microstrip(
-    pcb=pcb,
-    position=Coordinate2(np.average([port1_x, pcb_len / 2]), port0_y),
-    length=pcb_len / 2 - port1_x,
-    width=trace_width,
-    propagation_axis=Axis("x", direction=-1),
-    port_number=2,
-    excite=False,
-    ref_impedance=50,
-)
-
-port2_x = coupler_port_positions[2].x
-port2_y = coupler_port_positions[2].y
-Microstrip(
-    pcb=pcb,
-    position=Coordinate2(port2_x, np.average([port2_y, -pcb_width / 2])),
-    length=port2_y + pcb_width / 2,
-    width=trace_width,
-    propagation_axis=Axis("y"),
-    ref_impedance=50,
-    port_number=3,
-)
-
-port3_x = coupler_port_positions[3].x
-Microstrip(
-    pcb=pcb,
-    position=Coordinate2(port3_x, np.average([port2_y, -pcb_width / 2])),
-    length=port2_y + pcb_width / 2,
-    width=trace_width,
-    propagation_axis=Axis("y"),
-    ref_impedance=50,
-    port_number=4,
-)
-#+end_src
-
-Ports 2, 3 and 4 are instantiated in much the same way as
-port 1. There are two main differences, however. The first is that
-ports 3 and 4 face in the y-direction. This rotates the structure and
-measurement probes by 90 degrees relative to an x-orientation. The
-other difference is that port 2 faces in the negative
-x-direction. This ensures that the voltage and current calculations
-are performed correctly for its orientation.
+~MicrostripPort~ is an example of an important concept in pyems: a port. Ports
+are conceptually identical to the OpenEMS concept except that they integrate
+better with the rest of pyems. A port is essentially a point of interface to the
+outside world. Ports are locations where signal excitations are created and
+where voltages and currents are measured.
 
 #+begin_src python
 Mesh(
     sim=sim,
-    metal_res=1 / 80,
-    nonmetal_res=1 / 40,
-    smooth=(1.1, 1.5, 1.5),
-    min_lines=5,
-    expand_bounds=((0, 0), (0, 0), (10, 40)),
+    metal_res=1 / 40,
+    nonmetal_res=1 / 10,
+    expand_bounds=((8, 8), (8, 8), (8, 8)),
 )
 #+end_src
-
-At this point we've finished the entire physical structure used in the
-simulation. In other words if we viewed the structure with AppCSXCAD
-(which we'll do shortly), it would look like it would if you were
-holding the PCB in front of you. Additionally, we've imbued that
-structure with all the electrical properties it needs for simulation.
 
 However, OpenEMS's FDTD algorithm needs to know where in that
 structure it should be calculating the solutions to Maxwell's
@@ -394,133 +123,35 @@ insulator. Instead, something called the [[https://openems.de/index.php/FDTD_Mes
 to achieve a more accurate simulation result without simply adding
 more mesh lines (which would increase the simulation time). Pyems
 takes care of this and a bunch of other implementation-specific
-details for you. For instance it ensures a proper smoothness between
-adjacent mesh line spacings and makes sure that mesh lines work well
-with voltage and current probes (there are a number of important
-considerations in this regard that I won't go into now).
-
-~metal_res~ specifies the maximum spacing between mesh lines inside a
-metal. It is specified as a fraction of the minimum simulation
-wavelength, which in turn is determined by the maximum frequency of
-~freq~ from the beginning of this tutorial. ~nonmetal_res~ does the
-same thing but for non-metal areas such as the substrate and
-surrounding air. ~smooth~ ensures that adjacent spacings are within a
-multiplicative factor of one another. Each dimension abides by its own
-smoothness factor, which is why we pass a tuple of 3 elements
-corresponding to (x, y, z). In this example, we've kept the x lines
-"smoother" than the y or z lines since the signal propagates primarily
-in the x-direction. The ~min_lines~ parameter specifies the minimum
-number of mesh lines that must be present in one dimension of a
-primitive. For instance, the width of a microstrip trace (given the
-resolution we've provided) would normally contain fewer than 5 mesh
-lines. However, if there are too few mesh lines the simulation will
-give incorrect results, believing that the microstrip structure is a
-different width than it actually is. Finally, ~expand_bounds~
-specifies the number of additional lines we'd like outside our
-simulation structure. This creates an air layer between the structure
-and the boundary. The parameter is passes as a tuple of 3 tuples each
-of 2 elements. It signifies
-
-~((xmin, xmax), (ymin, ymax), (zmin, zmax))~
-
-We can see from our example that we've only added an air layer in the
-z-dimension. We haven't done this in the x-, or y-dimensions because
-the ports must terminate in a perfectly-matched layer (PML). This
-ensures that we don't get signal reflections at the ports, making our
-post-simulation analysis more accurate.
-
-#+begin_src python
-FieldDump(
-    sim=sim,
-    box=Box3(
-        Coordinate3(-pcb_len / 2, -pcb_width / 2, 0),
-        Coordinate3(pcb_len / 2, pcb_width / 2, 0),
-    ),
-    dump_type=DumpType.current_density_time,
-)
-#+end_src
-
-~FieldDump~ adds a non-physical structure to our simulation, which
-will record and allow us to view the current density at the top PCB
-metal layer. ~box~ specifies the region to record. We have made it
-2-dimensional though we could have made it 3-dimensional. ~dump_type~
-specifies the type of field to record, for which there are a number of
-possibilities. See ~DumpType~ for other options.
-
-#+begin_src python
-write_footprint(coupler, "coupler_20db", "coupler_20db.kicad_mod")
-#+end_src
-
-~write_footprint~ writes a KiCAD-compatible footprint relative to the
-current directory.
+details for you.
 
 #+begin_src python
 sim.run()
 #+end_src
 
-Calling the ~run~ method of our ~Simulation~ object first displays our
-CSXCAD object with AppCSXCAD (this can be turned off for usage in
-scripts) and then asks us if we'd like to proceed with the OpenEMS
-simulation.
-
-At this point you should have an AppCSXCAD window open with the
-following structure
-
-[[file:.img/coupler_csxcad.png]]
-
-#+begin_src python
-sim.view_field()
-#+end_src
-
-~view_field()~ runs ParaView on the recorded field dump. Here's a GIF
-of the result
-
-[[file:.img/coupler_current_time.gif]]
-
-#+begin_src python
-print_table(
-    data=[
-        sim.freq / 1e9,
-        np.abs(sim.ports[0].impedance()),
-        sim.s_param(1, 1),
-        sim.s_param(2, 1),
-        sim.s_param(3, 1),
-        sim.s_param(4, 1),
-    ],
-    col_names=["freq", "z0", "s11", "s21", "s31", "s41"],
-    prec=[4, 4, 4, 4, 4, 4],
-)
-#+end_src
-
-~print_table~ is a convenience method to print tabular data in
-nicely-spaced columns. This displays the calculated port 1 impedance
-and all S-parameters for each frequency value of the simulation.
-
-If we had plotted this and additionally computed the directivity, we
-would see
-
-[[file:.img/coupler_plot.svg]]
-
 * Usage
-This section is very incomplete.
+** Headless Runner (JSON)
+Pyems provides a formal, versioned JSON interface for driving simulations
+without writing Python code. This is particularly useful for integrating pyems
+into other software environments, such as the FreeCAD EMS workbench.
 
-** Structures
-:PROPERTIES:
-:ID:       556e1040-a5bd-4175-8b80-d7d613fea8ba
-:END:
-** Transformations
-Many [[id:556e1040-a5bd-4175-8b80-d7d613fea8ba][structure]] objects accept optional transformation
-parameters. They also generally accept position coordinates. The
-object is first created at the origin, then the transform is applied,
-finally followed by a translation of the center of the structure to
-the supplied position. As a result translation transformations should
-not be needed, although pyems will accept them.
+The runner validates input files against a strict schema (v1.0) before
+execution, ensuring that physical constraints and data types are correct.
 
-* Automatic Mesh Generation Algorithm
+#+begin_src bash
+python -m pyems.runner simulation.json
+#+end_src
+
+The schema definition and documentation can be found in the ~schema/~
+directory. A ~--validate-only~ flag is available for pre-simulation checks:
+
+#+begin_src bash
+python -m pyems.runner --validate-only simulation.json
+#+end_src
+
+** Automatic Mesh Generation Algorithm
 This section describes how the automatic mesh generation algorithm
-works. Although I intend to keep it up to date, since the mesher is
-still evolving this description may at times lag behind
-development. If you find an inconsistency, please submit an issue.
+works.
 
 In order to generate a mesh from a CSXCAD geometry, pyems starts by
 getting a list of all physical CSXCAD primitives (i.e., CSXCAD
@@ -528,7 +159,7 @@ primitives that have an effect on the simulation). Then, for each
 dimension it extracts a list of locations for mesh lines that must be
 fixed at those locations. These correspond to zero-dimension
 structures (e.g., a planar structure created by
-~AddConductingSheet~). Next, pyems iterates through the full list of
+~AddConducting_sheet~). Next, pyems iterates through the full list of
 physical primitives and extracts 3 lists of boundary positions, one
 for each dimension. For example, a boundary position in the
 x-dimension would correspond to a location where the physical
@@ -543,8 +174,7 @@ which it classifies as metal, nonmetal or air. This is called a
 ~BoundedType~. To associate the property type it finds the type of the
 primitive corresponding to the smallest length in that dimension
 encompassing the bounded region. Where ties exist, the metal type gets
-priority. There is still at least one issue with this part of the
-process, which I will fix (e.g., see [[https://github.com/matthuszagh/pyems/issues/2][issue #2]]).
+priority.
 
 Pyems then adds peripheral ~BoundedType~'s for simulation air space,
 records the location of boundaries between a metal, and nonmetal and
@@ -575,33 +205,9 @@ location (e.g., probes need to align to the mesh), and generates the
 actual mesh in the CSXCAD structure. It then performs a number of
 checks for correctness.
 
-* Planned Features
-The following set of features is planned, but not currently
-implemented.
-
-1. A tolerance analysis that incorporates variation in the input
-   simulation parameters (e.g. prepreg thickness, etching precision,
-   etc.).
-2. Support for independent dielectric properties for each substrate
-   layer. Many PCB processes (especially in microwave contexts)
-   require this. This is not difficult to implement. Please raise an
-   issue if you'd like this.
-
 * Textbook References
-A number of equations in this code base come from microwave design and
-theory textbooks. I've made an effort to make a comment in the code
-whenever an equation is taken from one of these textbooks so that
-users can look up the corresponding theory and to make it easier to
-find bugs in the code.
-
-Here's a list of the textbooks referenced:
-1. Pozar refers to "Microwave Engineering" by David Pozar, Fourth
-   Edition.
-2. Wadell refers to "Transmission Line Design Handbook" by Brian
-   Wadell, published 1991.
-
-If you find a reference to a text not mentioned here, please submit a
-bug report or pull request.
+1. **Pozar** refers to "Microwave Engineering" by David Pozar, Fourth Edition.
+2. **Wadell** refers to "Transmission Line Design Handbook" by Brian Wadell, 1991.
 
 * To-Do
 ** TODO via wall should support nonzero dimensions

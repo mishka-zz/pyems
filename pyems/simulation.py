@@ -1,5 +1,4 @@
 import os
-import subprocess
 import sys
 import shutil
 from tempfile import mkdtemp
@@ -148,14 +147,10 @@ class Simulation:
         """"""
         return self._nf2ff
 
-    def run(self, csx: bool = True, debug_pec: bool = False, threads: int = 2) -> None:
+    def run(self, debug_pec: bool = False, threads: int = 2) -> None:
         """
         Run simulation.
 
-        :param csx: View the CSXCAD structure before running the
-            simulation. This additionally prompts the user as to
-            whether they'd like to continue with the simulation after
-            viewing the simulation structure.
         :param debug_pec: Dump a file containing information about the
             PECs (perfect electrical conductors). This file can be
             viewed with Paraview.
@@ -164,8 +159,6 @@ class Simulation:
             value of 0 uses the maximum number of threads and any
             other number uses the number provided.
         """
-        if csx:
-            self.view_csx(prompt=True)
         if not self._calc_only:
             if debug_pec:
                 self.fdtd.Run(
@@ -177,35 +170,6 @@ class Simulation:
             else:
                 self.fdtd.Run(self.sim_dir, cleanup=False, numThreads=threads)
         self._calc_ports()
-
-    def view_csx(self, prompt: bool = False) -> None:
-        """
-        View the CSX network.
-
-        :param prompt: Prompt user whether to continue simulation.
-        """
-        subprocess.run(["AppCSXCAD", self._csx_path])
-        if prompt:
-            self._prompt_terminate()
-
-    def view_field(self, index: int = 0) -> None:
-        """
-        View the field dump corresponding to the given index.
-        """
-        if index > len(self._field_dumps) - 1:
-            raise ValueError("Invalid field dump index provided.")
-        self._field_dumps[index].view()
-
-    def _prompt_terminate(self) -> None:
-        """"""
-        ans = input("Continue simulation (y/n)? ")
-        ans = ans.lower()
-        if ans == "n":
-            print("Terminating simulation.")
-            sys.exit(0)
-        elif ans != "y":
-            print("Please answer y/n.")
-            self._prompt_terminate()
 
     def post_mesh(self):
         """

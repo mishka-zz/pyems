@@ -1,24 +1,5 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "pyems"
-version = "0.2.0"
-description = "Headless python backend for OpenEMS simulations"
-authors = [
-    { name = "Matt Huszagh", email = "huszaghmatt@gmail.com" }
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
-requires-python = ">=3.9"
-dependencies = [
-    "numpy>=1.20.0",
-    "scipy>=1.5.2",
-    "CSXCAD"
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "black",
-    "ruff"
-]
+pythonpath = ["."]

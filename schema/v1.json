@@ -1,0 +1,972 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pyems.org/schema/v1.json",
+  "title": "pyems Simulation Schema v1.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "simulation"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "simulation": {
+      "$ref": "#/$defs/simulation"
+    },
+    "mesh": {
+      "$ref": "#/$defs/mesh"
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/material"
+      }
+    },
+    "primitives": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive"
+      }
+    },
+    "ports": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/port"
+      }
+    },
+    "lumped_elements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/lumped_element"
+      }
+    },
+    "excitations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/excitation"
+      },
+      "minItems": 1
+    },
+    "mesh_lines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mesh_line"
+      }
+    },
+    "mesh_regions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mesh_region"
+      }
+    },
+    "nf2ff": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nf2ff"
+      }
+    },
+    "field_dumps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/field_dump"
+      }
+    },
+    "probes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/probe"
+      }
+    },
+    "pcb_stackup": {
+      "$ref": "#/$defs/pcb_stackup"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "simulation": {
+      "type": "object",
+      "required": [
+        "freq_range",
+        "boundary_conditions"
+      ],
+      "properties": {
+        "freq_range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "num_freq_points": {
+          "type": "integer",
+          "default": 501,
+          "minimum": 1
+        },
+        "waveform": {
+          "type": "string",
+          "enum": [
+            "Gaussian",
+            "Sinusoid",
+            "Step",
+            "Custom"
+          ],
+          "default": "Gaussian"
+        },
+        "boundary_conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/boundary_condition"
+          },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "end_criteria": {
+          "type": "number",
+          "default": 1e-5,
+          "minimum": 0
+        },
+        "timestep_factor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1.0,
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "type": "number",
+          "default": 1e-3,
+          "exclusiveMinimum": 0
+        },
+        "sim_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threads": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0
+        },
+        "reference_frequency": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_timesteps": {
+          "type": "integer",
+          "default": 1000000,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "boundary_condition": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "PML",
+            "PEC",
+            "PMC",
+            "Mur",
+            "Periodic"
+          ]
+        },
+        "cells": {
+          "type": "integer",
+          "default": 8,
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "mesh": {
+      "type": "object",
+      "properties": {
+        "metal_res": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "nonmetal_res": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "smooth": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 1.0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "min_lines": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1
+        },
+        "expand_bounds": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "additionalProperties": false
+    },
+    "material": {
+      "type": "object",
+      "required": [
+        "name",
+        "kind"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "dielectric",
+            "metal",
+            "conducting_sheet"
+          ]
+        },
+        "color": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "minItems": 3,
+          "maxItems": 4
+        },
+        "source_label": {
+          "type": "string"
+        },
+        "epsilon": {
+          "type": "number",
+          "minimum": 1.0
+        },
+        "kappa": {
+          "type": "number",
+          "minimum": 0
+        },
+        "conductivity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thickness": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "dielectric"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "epsilon"
+            ],
+            "properties": {
+              "conductivity": false,
+              "thickness": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "metal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "epsilon": false,
+              "kappa": false,
+              "conductivity": false,
+              "thickness": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "conducting_sheet"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "conductivity",
+              "thickness"
+            ],
+            "properties": {
+              "epsilon": false,
+              "kappa": false
+            }
+          }
+        }
+      ]
+    },
+    "primitive": {
+      "type": "object",
+      "required": [
+        "type",
+        "material"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "box",
+            "cylinder",
+            "polygon"
+          ]
+        },
+        "material": {
+          "type": "string",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "source_label": {
+          "type": "string"
+        },
+        "start": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "stop": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "radius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 3
+        },
+        "normal": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "elevation": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "box"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "start",
+              "stop"
+            ],
+            "properties": {
+              "radius": false,
+              "points": false,
+              "normal": false,
+              "elevation": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "cylinder"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "start",
+              "stop",
+              "radius"
+            ],
+            "properties": {
+              "points": false,
+              "normal": false,
+              "elevation": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "polygon"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "points",
+              "normal",
+              "elevation"
+            ],
+            "properties": {
+              "start": false,
+              "stop": false,
+              "radius": false
+            }
+          }
+        }
+      ]
+    },
+    "coordinate": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "port": {
+      "type": "object",
+      "required": [
+        "type",
+        "number"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "lumped",
+            "microstrip",
+            "coaxial",
+            "rect_waveguide",
+            "differential_microstrip"
+          ]
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "excite": {
+          "type": "boolean",
+          "default": false
+        },
+        "impedance": {
+          "type": "number",
+          "default": 50.0,
+          "exclusiveMinimum": 0
+        },
+        "feed_shift": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "measurement_shift": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ref_impedance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "source_label": {
+          "type": "string"
+        },
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "propagation_axis": {
+          "$ref": "#/$defs/axis"
+        },
+        "excitation_axis": {
+          "$ref": "#/$defs/axis"
+        },
+        "thickness": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "conductivity": {
+          "type": "number",
+          "default": 5.8e7,
+          "minimum": 0
+        },
+        "start": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "stop": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "radius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "core_radius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0
+        },
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trace_face_pos": {
+          "$ref": "#/$defs/box"
+        },
+        "trace_face_neg": {
+          "$ref": "#/$defs/box"
+        },
+        "ground_reference": {
+          "$ref": "#/$defs/box"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "lumped"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "box",
+              "excitation_axis"
+            ],
+            "properties": {
+              "propagation_axis": false,
+              "thickness": false,
+              "conductivity": false,
+              "start": false,
+              "stop": false,
+              "radius": false,
+              "core_radius": false,
+              "delay": false,
+              "mode": false,
+              "trace_face_pos": false,
+              "trace_face_neg": false,
+              "ground_reference": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "microstrip"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "box",
+              "propagation_axis",
+              "excitation_axis",
+              "thickness",
+              "conductivity"
+            ],
+            "properties": {
+              "start": false,
+              "stop": false,
+              "radius": false,
+              "core_radius": false,
+              "delay": false,
+              "mode": false,
+              "trace_face_pos": false,
+              "trace_face_neg": false,
+              "ground_reference": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "coaxial"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "start",
+              "stop",
+              "radius",
+              "core_radius"
+            ],
+            "properties": {
+              "box": false,
+              "propagation_axis": false,
+              "excitation_axis": false,
+              "thickness": false,
+              "conductivity": false,
+              "mode": false,
+              "trace_face_pos": false,
+              "trace_face_neg": false,
+              "ground_reference": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "rect_waveguide"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "box",
+              "propagation_axis",
+              "mode"
+            ],
+            "properties": {
+              "excitation_axis": false,
+              "thickness": false,
+              "conductivity": false,
+              "start": false,
+              "stop": false,
+              "radius": false,
+              "core_radius": false,
+              "delay": false,
+              "trace_face_pos": false,
+              "trace_face_neg": false,
+              "ground_reference": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "differential_microstrip"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "trace_face_pos",
+              "trace_face_neg",
+              "ground_reference",
+              "thickness",
+              "conductivity",
+              "propagation_axis"
+            ],
+            "properties": {
+              "box": false,
+              "excitation_axis": false,
+              "start": false,
+              "stop": false,
+              "radius": false,
+              "core_radius": false,
+              "delay": false,
+              "mode": false
+            }
+          }
+        }
+      ]
+    },
+    "box": {
+      "type": "object",
+      "required": [
+        "start",
+        "stop"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "stop": {
+          "$ref": "#/$defs/coordinate"
+        }
+      },
+      "additionalProperties": false
+    },
+    "axis": {
+      "type": "object",
+      "required": [
+        "axis",
+        "direction"
+      ],
+      "properties": {
+        "axis": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "direction": {
+          "type": "integer",
+          "enum": [
+            -1,
+            1
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "lumped_element": {
+      "type": "object",
+      "required": [
+        "direction",
+        "gap_box"
+      ],
+      "properties": {
+        "R": {
+          "type": "number",
+          "minimum": 0
+        },
+        "L": {
+          "type": "number",
+          "minimum": 0
+        },
+        "C": {
+          "type": "number",
+          "minimum": 0
+        },
+        "direction": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "gap_box": {
+          "$ref": "#/$defs/box"
+        },
+        "caps": {
+          "type": "boolean",
+          "default": true
+        },
+        "source_label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "excitation": {
+      "type": "object",
+      "required": [
+        "active_ports"
+      ],
+      "properties": {
+        "active_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "amplitude": {
+          "type": "number",
+          "minimum": 0
+        },
+        "phase": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mesh_line": {
+      "type": "object",
+      "required": [
+        "axis",
+        "coordinate"
+      ],
+      "properties": {
+        "axis": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "coordinate": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mesh_region": {
+      "type": "object",
+      "required": [
+        "box",
+        "max_step"
+      ],
+      "properties": {
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "max_step": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "additionalProperties": false
+    },
+    "nf2ff": {
+      "type": "object",
+      "required": [
+        "box",
+        "theta_points",
+        "phi_points",
+        "frequencies"
+      ],
+      "properties": {
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "theta_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "phi_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "frequencies": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "field_dump": {
+      "type": "object",
+      "required": [
+        "box",
+        "type"
+      ],
+      "properties": {
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "E_TimeDomain",
+            "H_TimeDomain",
+            "E_Frequency",
+            "H_Frequency",
+            "J_TimeDomain"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "probe": {
+      "type": "object",
+      "required": [
+        "position",
+        "type",
+        "direction"
+      ],
+      "properties": {
+        "position": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "voltage",
+            "current",
+            "E_Field",
+            "H_Field"
+          ]
+        },
+        "direction": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "pcb_stackup": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "$ref": "#/$defs/coordinate"
+        },
+        "metal_conductivity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "via_plating_thickness": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

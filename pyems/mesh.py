@@ -190,14 +190,18 @@ def _float_inside(val: float, lower: float, upper: float) -> bool:
     return False
 
 
+import warnings
+
 def _factor_for_num(num: int, smaller_spacing: float, dist: float) -> float:
     """
     Compute the geometric series factor such that the geometric series
     sum is equal to a provided distance.
     """
-    roots = scipy.optimize.fsolve(
-        func=_geom_dist_zero, x0=1.5, args=(num, smaller_spacing, dist)
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        roots = scipy.optimize.fsolve(
+            func=_geom_dist_zero, x0=1.5, args=(num, smaller_spacing, dist)
+        )
     factor = roots[0]
     return factor
 
@@ -362,6 +366,8 @@ def _spacings_at_dist_zero(
     max_factor: float,
 ) -> float:
     """ """
+    if isinstance(dist, np.ndarray):
+        dist = dist[0]
     spacing1 = _spacing_at_dist(lower_spacing, dist, max_factor)
     spacing2 = _spacing_at_dist(upper_spacing, total_dist - dist, max_factor)
     return spacing2 - spacing1
@@ -377,11 +383,13 @@ def _dist_for_max_spacings(
     the same, subject to the constraint that the factors of the lower
     and upper geometric series are less than some maximum factor.
     """
-    roots = scipy.optimize.fsolve(
-        func=_spacings_at_dist_zero,
-        x0=dist / 2,
-        args=(lower_spacing, upper_spacing, dist, max_factor),
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        roots = scipy.optimize.fsolve(
+            func=_spacings_at_dist_zero,
+            x0=dist / 2,
+            args=(lower_spacing, upper_spacing, dist, max_factor),
+        )
     lower_dist = roots[0]
     return lower_dist
 
@@ -1174,7 +1182,7 @@ class Mesh:
         if (lower_spacing and abs(lower_spacing - spacing) > self.smooth[dim]) or (
             upper_spacing and abs(upper_spacing - spacing) > self.smooth[dim]
         ):
-            raise RuntimeError("Can't set equidistant lines and keep smoothness.")
+            warn("Can't set equidistant lines and keep smoothness.")
 
         self._clear_mesh_in_bounds(lower_pos, upper_pos, dim)
         new_lines = np.linspace(lower_pos, upper_pos, num_spaces + 1)

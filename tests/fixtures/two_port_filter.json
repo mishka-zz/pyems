@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "simulation": {
+    "freq_range": [1e9, 5e9],
+    "boundary_conditions": [
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 },
+      { "type": "PML", "cells": 8 }
+    ],
+    "unit": 1e-3
+  },
+  "materials": [
+    { "name": "FR4", "kind": "dielectric", "epsilon": 4.4 },
+    { "name": "Copper", "kind": "metal" }
+  ],
+  "primitives": [
+    { "type": "box", "material": "FR4", "start": [-20, -10, 0], "stop": [20, 10, 1.6], "source_label": "Substrate" },
+    { "type": "box", "material": "Copper", "start": [-20, -10, -0.035], "stop": [20, 10, 0], "source_label": "Ground" },
+    { "type": "box", "material": "Copper", "start": [-20, -1.5, 1.6], "stop": [-0.5, 1.5, 1.635], "source_label": "Trace_In" },
+    { "type": "box", "material": "Copper", "start": [0.5, -1.5, 1.6], "stop": [20, 1.5, 1.635], "source_label": "Trace_Out" }
+  ],
+  "ports": [
+    {
+      "type": "microstrip",
+      "number": 1,
+      "excite": true,
+      "box": { "start": [-20, -1.5, 0], "stop": [-18, 1.5, 1.635] },
+      "propagation_axis": { "axis": 0, "direction": 1 },
+      "excitation_axis": { "axis": 2, "direction": 1 },
+      "thickness": 0.035,
+      "conductivity": 5.8e7
+    },
+    {
+      "type": "microstrip",
+      "number": 2,
+      "excite": false,
+      "box": { "start": [18, -1.5, 0], "stop": [20, 1.5, 1.635] },
+      "propagation_axis": { "axis": 0, "direction": -1 },
+      "excitation_axis": { "axis": 2, "direction": 1 },
+      "thickness": 0.035,
+      "conductivity": 5.8e7
+    }
+  ],
+  "lumped_elements": [
+    {
+      "R": 50,
+      "C": 1e-12,
+      "direction": 0,
+      "gap_box": { "start": [-0.5, -1.5, 1.6], "stop": [0.5, 1.5, 1.635] },
+      "source_label": "Series_RC"
+    }
+  ],
+  "excitations": [
+    { "active_ports": [1] }
+  ]
+}
