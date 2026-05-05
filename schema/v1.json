@@ -910,6 +910,9 @@
             "H_Frequency",
             "J_TimeDomain"
           ]
+        },
+        "source_label": {
+          "type": "string"
         }
       },
       "additionalProperties": false

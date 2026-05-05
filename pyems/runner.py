@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import sys
 import logging
+import os
 from pyems.simulation import Simulation
 from pyems.mesh import Mesh
 from pyems.boundary import BoundaryConditions
@@ -15,6 +16,20 @@ import pyems.config
 
 logging.basicConfig(level=logging.INFO)
 
+DUMP_TYPE_MAP = {
+    "E_TimeDomain": DumpType.efield_time,
+    "H_TimeDomain": DumpType.hfield_time,
+    "E_Frequency": DumpType.efield_frequency,
+    "H_Frequency": DumpType.hfield_frequency,
+    "J_TimeDomain": DumpType.current_density_time,
+}
+
+
+def _sanitize_marker_message(msg: str) -> str:
+    """Sanitize message for stdout markers (single-line, quote-safe)."""
+    return str(msg).replace("\n", " | ").replace('"', "'")
+
+
 def parse_axis(axis_cfg: pyems.config.AxisConfig):
     return Axis(axis_cfg.axis, axis_cfg.direction)
 
@@ -22,10 +37,14 @@ def parse_box3(box_cfg: pyems.config.BoxConfig):
     return Box3(Coordinate3(*box_cfg.start.as_list()), Coordinate3(*box_cfg.stop.as_list()))
 
 def run_simulation(config_path, validate_only=False):
+    print("PYEMS:STARTED schema_version=1", flush=True)
     cfg = pyems.config.load(config_path)
 
+    print(f"PYEMS:CONFIG_LOADED ports={len(cfg.ports)} primitives={len(cfg.primitives)} field_dumps={len(cfg.field_dumps)}", flush=True)
+
     if validate_only:
-        print("Configuration is valid.")
+        print("Configuration is valid.", flush=True)
+        print("PYEMS:DONE", flush=True)
         return
 
     sim_cfg = cfg.simulation
@@ -139,9 +158,20 @@ def run_simulation(config_path, validate_only=False):
         active_ports = set(cfg.excitations[0].active_ports)
         for port in sim.ports:
             port.excite = port.number in active_ports
-        
+
+    for fd_cfg in cfg.field_dumps:
+        FieldDump(
+            sim=sim,
+            box=parse_box3(fd_cfg.box),
+            dump_type=DUMP_TYPE_MAP[fd_cfg.type]
+        )
+
+    print("PYEMS:SIM_BUILT", flush=True)
+    print(f"PYEMS:SOLVER_STARTED threads={sim_cfg.threads} sim_dir={sim.sim_dir}", flush=True)
     sim.run(threads=sim_cfg.threads)
+    print("PYEMS:SOLVER_FINISHED", flush=True)
     
+    print("PYEMS:POSTPROCESS_STARTED", flush=True)
     results = {}
     for port in sim.ports:
         z0 = np.abs(port.impedance())
@@ -157,11 +187,12 @@ def run_simulation(config_path, validate_only=False):
                 
     results["frequency"] = sim.freq.tolist()
     
-    output_path = "results.json"
+    output_path = os.path.join(sim.sim_dir, "results.json")
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
         
-    print(f"Simulation completed. Results written to {output_path}")
+    print(f"PYEMS:RESULTS {output_path}", flush=True)
+    print("PYEMS:DONE", flush=True)
 
 
 if __name__ == "__main__":
@@ -173,8 +204,10 @@ if __name__ == "__main__":
     try:
         run_simulation(args.config, validate_only=args.validate_only)
     except pyems.config.ConfigError as e:
-        print(f"Configuration error: {e}", file=sys.stderr)
+        msg = _sanitize_marker_message(e)
+        print(f'PYEMS:ERROR kind=config message="{msg}"', flush=True)
         sys.exit(1)
     except Exception as e:
-        print(f"Internal error: {e}", file=sys.stderr)
+        msg = _sanitize_marker_message(e)
+        print(f'PYEMS:ERROR kind=internal message="{msg}"', flush=True)
         sys.exit(2)

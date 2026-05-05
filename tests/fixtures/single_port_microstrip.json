@@ -2,7 +2,7 @@
   "schema_version": 1,
   "simulation": {
     "freq_range": [1e9, 10e9],
-    "num_freq_points": 501,
+    "num_freq_points": 101,
     "boundary_conditions": [
       { "type": "PML", "cells": 8 },
       { "type": "PML", "cells": 8 },
@@ -12,7 +12,15 @@
       { "type": "PML", "cells": 8 }
     ],
     "unit": 1e-3,
+    "timestep_factor": 0.9,
     "sim_dir": "sim_microstrip"
+  },
+  "mesh": {
+    "metal_res": 0.05,
+    "nonmetal_res": 0.1,
+    "smooth": [1.2, 1.2, 1.2],
+    "min_lines": 3,
+    "expand_bounds": [[0, 0], [10, 10], [10, 10]]
   },
   "materials": [
     {
@@ -24,29 +32,24 @@
     {
       "name": "Copper",
       "kind": "metal",
-      "source_label": "Copper_Trace"
+      "source_label": "Copper_Metal"
     }
   ],
   "primitives": [
     {
       "type": "box",
       "material": "FR4",
-      "start": [-10, -10, 0],
-      "stop": [10, 10, 1.6],
+      "priority": 0,
+      "start": [-100, -15, 0],
+      "stop": [100, 15, 1.6],
       "source_label": "Substrate"
     },
     {
       "type": "box",
       "material": "Copper",
-      "start": [-10, -1.5, 1.6],
-      "stop": [10, 1.5, 1.635],
-      "source_label": "Trace_50Ohm"
-    },
-    {
-      "type": "box",
-      "material": "Copper",
-      "start": [-10, -10, -0.035],
-      "stop": [10, 10, 0],
+      "priority": 1,
+      "start": [-100, -15, 0],
+      "stop": [100, 15, 0],
       "source_label": "GroundPlane"
     }
   ],
@@ -56,8 +59,8 @@
       "number": 1,
       "excite": true,
       "box": {
-        "start": [-10, -1.5, 0],
-        "stop": [-9, 1.5, 1.635]
+        "start": [-100, -1.5, 0],
+        "stop": [100, 1.5, 1.6]
       },
       "propagation_axis": { "axis": 0, "direction": 1 },
       "excitation_axis": { "axis": 2, "direction": 1 },

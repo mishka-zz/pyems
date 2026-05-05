@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "simulation": {
-    "freq_range": [1e6, 6e9],
+    "freq_range": [1e9, 10e9],
     "num_freq_points": 101,
     "boundary_conditions": [
       { "type": "PML", "cells": 8 },
@@ -13,7 +13,7 @@
     ],
     "unit": 1e-3,
     "timestep_factor": 0.9,
-    "sim_dir": "sim_filter"
+    "sim_dir": "sim_microstrip_dump"
   },
   "mesh": {
     "metal_res": 0.05,
@@ -40,16 +40,16 @@
       "type": "box",
       "material": "FR4",
       "priority": 0,
-      "start": [-150, -15, 0],
-      "stop": [150, 15, 1.6],
+      "start": [-100, -15, 0],
+      "stop": [100, 15, 1.6],
       "source_label": "Substrate"
     },
     {
       "type": "box",
       "material": "Copper",
       "priority": 1,
-      "start": [-150, -15, 0],
-      "stop": [150, 15, 0],
+      "start": [-100, -15, 0],
+      "stop": [100, 15, 0],
       "source_label": "GroundPlane"
     }
   ],
@@ -59,41 +59,24 @@
       "number": 1,
       "excite": true,
       "box": {
-        "start": [-150, -1.5, 0],
-        "stop": [-0.5, 1.5, 1.6]
+        "start": [-100, -1.5, 0],
+        "stop": [100, 1.5, 1.6]
       },
       "propagation_axis": { "axis": 0, "direction": 1 },
       "excitation_axis": { "axis": 2, "direction": 1 },
       "thickness": 0.035,
       "conductivity": 5.8e7,
-      "feed_shift": 0.4,
-      "measurement_shift": 0.6,
-      "source_label": "Port1"
-    },
-    {
-      "type": "microstrip",
-      "number": 2,
-      "excite": false,
-      "box": {
-        "start": [0.5, -1.5, 0],
-        "stop": [150, 1.5, 1.6]
-      },
-      "propagation_axis": { "axis": 0, "direction": -1 },
-      "excitation_axis": { "axis": 2, "direction": 1 },
-      "thickness": 0.035,
-      "conductivity": 5.8e7,
-      "feed_shift": 0.4,
-      "measurement_shift": 0.6,
-      "source_label": "Port2"
+      "source_label": "InputPort"
     }
   ],
-  "lumped_elements": [
+  "field_dumps": [
     {
-      "R": 50,
-      "C": 1e-12,
-      "direction": 0,
-      "gap_box": { "start": [-0.5, -1.5, 1.6], "stop": [0.5, 1.5, 1.6] },
-      "source_label": "Series_RC"
+      "type": "E_TimeDomain",
+      "box": {
+        "start": [-50, -10, 0],
+        "stop": [50, 10, 1.6]
+      },
+      "source_label": "ETimeDump"
     }
   ],
   "excitations": [

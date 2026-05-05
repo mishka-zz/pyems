@@ -176,6 +176,12 @@ class ExcitationConfig:
     phase: Optional[float] = None
 
 @dataclass(frozen=True)
+class FieldDumpConfig:
+    box: BoxConfig
+    type: str   # one of: E_TimeDomain | H_TimeDomain | E_Frequency | H_Frequency | J_TimeDomain
+    source_label: Optional[str] = None
+
+@dataclass(frozen=True)
 class Config:
     schema_version: int
     simulation: SimulationConfig
@@ -188,7 +194,7 @@ class Config:
     mesh_lines: List[Dict[str, Any]] = field(default_factory=list)
     mesh_regions: List[Dict[str, Any]] = field(default_factory=list)
     nf2ff: List[Dict[str, Any]] = field(default_factory=list)
-    field_dumps: List[Dict[str, Any]] = field(default_factory=list)
+    field_dumps: Tuple[FieldDumpConfig, ...] = field(default_factory=tuple)
     probes: List[Dict[str, Any]] = field(default_factory=list)
     pcb_stackup: Optional[Dict[str, Any]] = None
 
@@ -197,11 +203,11 @@ class SchemaVersionError(ConfigError): pass
 class ValidationError(ConfigError): pass
 
 IMPLEMENTED_FEATURES = {
-    "simulation", "mesh", "materials", "primitives", "ports", "lumped_elements", "excitations"
+    "simulation", "mesh", "materials", "primitives", "ports", "lumped_elements", "excitations", "field_dumps"
 }
 
 RESERVED_FEATURES = {
-    "mesh_lines", "mesh_regions", "nf2ff", "field_dumps", "probes", "pcb_stackup"
+    "mesh_lines", "mesh_regions", "nf2ff", "probes", "pcb_stackup"
 }
 
 def load(path: Union[str, Path]) -> Config:
@@ -381,6 +387,14 @@ def load(path: Union[str, Path]) -> Config:
             phase=e.get("phase")
         ))
 
+    field_dumps = []
+    for fd in data.get("field_dumps", []):
+        field_dumps.append(FieldDumpConfig(
+            box=BoxConfig(Coordinate3.from_list(fd["box"]["start"]), Coordinate3.from_list(fd["box"]["stop"])),
+            type=fd["type"],
+            source_label=fd.get("source_label")
+        ))
+
     return Config(
         schema_version=data["schema_version"],
         simulation=simulation,
@@ -393,7 +407,7 @@ def load(path: Union[str, Path]) -> Config:
         mesh_lines=data.get("mesh_lines", []),
         mesh_regions=data.get("mesh_regions", []),
         nf2ff=data.get("nf2ff", []),
-        field_dumps=data.get("field_dumps", []),
+        field_dumps=tuple(field_dumps),
         probes=data.get("probes", []),
         pcb_stackup=data.get("pcb_stackup")
     )

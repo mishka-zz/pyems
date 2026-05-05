@@ -6,27 +6,29 @@
 5. [[#automatic-mesh-generation-algorithm][Automatic Mesh Generation Algorithm]]
 
 * About
-Pyems is a high-level, headless Python interface to the electromagnetic field
-solver, [[https://openems.de/start/index.php][OpenEMS]]. It uses OpenEMS's own Python interface to hook into [[https://github.com/thliebig/CSXCAD][CSXCAD]]
-and [[https://github.com/thliebig/openEMS][OpenEMS]]. However, unlike that interface, whose primary purpose is
-to expose the underlying C++ interface as a Python API, pyems provides
-high-level functionality intended to facilitate and accelerate the
-simulation process. Moreover, OpenEMS contains a number of subtle
-usage traps that can be confusing to new users, and requires that
-those users understand certain limitations of the FDTD
-algorithm. Pyems attempts (when possible) to enforce correct usage in
-these situations and in other cases to make the usage tradeoffs more
-visible.
+Pyems is a high-level, headless, and schema-driven Python interface to
+the electromagnetic field solver, [[https://openems.de/start/index.php][OpenEMS]]. It uses OpenEMS's own
+Python interface to hook into [[https://github.com/thliebig/CSXCAD][CSXCAD]] and [[https://github.com/thliebig/openEMS][OpenEMS]]. However, unlike
+that interface, whose primary purpose is to expose the underlying C++
+interface as a Python API, pyems provides high-level functionality
+intended to facilitate and accelerate the simulation process.
+Moreover, OpenEMS contains a number of subtle usage traps that can be
+confusing to new users, and requires that those users understand
+certain limitations of the FDTD algorithm. Pyems attempts (when
+possible) to enforce correct usage in these situations and in other
+cases to make the usage tradeoffs more visible.
 
-Pyems focuses on being a robust translation and meshing engine. It is designed
-to be easily integrated into automated design flows or driven by external CAD
-tools via its declarative API.
+Pyems focuses on being a robust translation and meshing engine. It is
+designed to be easily integrated into automated design flows or driven
+by external CAD tools via its declarative API. Recent updates landed
+the formal JSON schema (v1), which ensures stability and
+reproducibility across different driving environments.
 
 To accomplish this goal, pyems provides:
 1. Configurable, automatic mesh generation.
 2. Simple port impedance and S-parameter calculations.
-3. A collection of low-level port classes (Microstrip, Coax, Waveguide)
-   designed for reliable EM excitation and measurement.
+3. A collection of low-level port classes (Microstrip, Coax,
+   Waveguide) designed for reliable EM excitation and measurement.
 4. Functions performing frequently-needed calculations involved with
    microwave design.
 5. Methods to optimize a simulation structure to achieve a desired

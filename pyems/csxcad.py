@@ -110,10 +110,11 @@ def add_conducting_sheet(
     color: Optional[str] = colors["enig"],
 ) -> CSProperties:
     """"""
+    unit = csx.GetGrid().GetDeltaUnit()
     prop = csx.AddConductingSheet(
         name,
         conductivity=conductivity,
-        thickness=thickness,
+        thickness=thickness * unit,
     )
     if color is not None:
         prop.SetColor(color)

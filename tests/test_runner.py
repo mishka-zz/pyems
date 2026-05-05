@@ -24,62 +24,57 @@ def test_headless_microstrip_slow():
         json_path = os.path.join(td, "test_config.json")
         sim_dir = os.path.join(td, "sim")
         
-        # Geometry: 40x40mm substrate, 1.6mm thick. 3mm trace (approx 50 ohms).
-        # Note: units are in meters (1.0) for this specific test case.
+        # Geometry: 200x30mm substrate, 1.6mm thick. 3mm trace (approx 50 ohms).
+        # This matches fixtures/single_port_microstrip.json exactly.
         config = {
             "schema_version": 1,
             "simulation": {
-                "freq_range": [1e8, 2e9], # 100MHz to 2GHz
-                "num_freq_points": 21,
-                "unit": 1.0, 
-                "end_criteria": 1e-3, # -30dB convergence
+                "freq_range": [1e9, 10e9],
+                "num_freq_points": 101,
+                "unit": 1e-3, 
+                "timestep_factor": 0.9,
+                "end_criteria": 1e-4, 
                 "sim_dir": sim_dir,
                 "boundary_conditions": [{"type": "PML", "cells": 8}] * 6
             },
             "mesh": {
-                # Coarse mesh for fast smoke test in CI
-                "metal_res": 0.002, 
-                "nonmetal_res": 0.004,
-                "smooth": [1.5, 1.5, 1.5],
-                "min_lines": 5,
-                "expand_bounds": [[10,10], [10,10], [10,10]]
+                "metal_res": 0.05, 
+                "nonmetal_res": 0.1,
+                "smooth": [1.2, 1.2, 1.2],
+                "min_lines": 3,
+                "expand_bounds": [[0, 0], [10, 10], [10, 10]]
             },
             "materials": [
                 {"name": "FR4", "kind": "dielectric", "epsilon": 4.4},
-                {"name": "Copper", "kind": "metal"} # PEC for speed/stability
+                {"name": "Copper", "kind": "metal"}
             ],
             "primitives": [
                 {
                     "material": "FR4",
                     "type": "box",
-                    "start": [-0.02, -0.02, 0],
-                    "stop": [0.02, 0.02, 0.0016],
+                    "priority": 0,
+                    "start": [-100, -15, 0],
+                    "stop": [100, 15, 1.6],
                     "source_label": "Substrate"
                 },
                 {
                     "material": "Copper",
                     "type": "box",
-                    "start": [-0.02, -0.02, -0.000035],
-                    "stop": [0.02, 0.02, 0],
+                    "priority": 1,
+                    "start": [-100, -15, 0],
+                    "stop": [100, 15, 0],
                     "source_label": "GroundPlane"
-                },
-                {
-                    "material": "Copper",
-                    "type": "box",
-                    "start": [-0.017, -0.0015, 0.0016],
-                    "stop": [0.02, 0.0015, 0.001635],
-                    "source_label": "Trace"
                 }
             ],
             "ports": [
                 {
                     "type": "microstrip",
                     "number": 1,
-                    "box": {"start": [-0.02, -0.0015, 0], "stop": [-0.017, 0.0015, 0.001635]},
+                    "excite": True,
+                    "box": {"start": [-100, -1.5, 0], "stop": [100, 1.5, 1.6]},
                     "propagation_axis": {"axis": 0, "direction": 1},
                     "excitation_axis": {"axis": 2, "direction": 1},
-                    "excite": True,
-                    "thickness": 0.000035, # meters
+                    "thickness": 0.035,
                     "conductivity": 5.8e7,
                     "source_label": "Port1"
                 }
@@ -92,7 +87,7 @@ def test_headless_microstrip_slow():
             
         run_simulation(json_path)
         
-        out_path = "results.json" 
+        out_path = os.path.join(sim_dir, "results.json")
         assert os.path.exists(out_path)
         with open(out_path, "r") as f:
             res = json.load(f)

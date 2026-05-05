@@ -406,8 +406,9 @@ class MicrostripPort(Port):
             direction in which the signal propagation occurs.
         :param excitation_axis: Axis and direction of signal
             excitation.
-        :param thickness: Metal trace thickness.  Units are whatever
-            you set the CSX unit to, defaults to m.
+        :param thickness: Metal trace thickness.  Units are in simulation
+            units (e.g. mm), which are then scaled by the CSX unit
+            (DeltaUnit) internally to reach absolute meters.
         :param conductivity: Metal conductivity (in S/m).  The default
             uses the conductivity of copper.
         :param feed_impedance: The feeding impedance value.  The
@@ -692,8 +693,9 @@ class DifferentialMicrostripPort(Port):
             reside.
         :param gap: Separation between inner edges of microstrip
             traces.
-        :param thickness: Metal trace thickness.  Units are whatever
-            you set the CSX unit to, defaults to m.
+        :param thickness: Metal trace thickness.  Units are in simulation
+            units (e.g. mm), which are then scaled by the CSX unit
+            (DeltaUnit) internally to reach absolute meters.
         :param conductivity: Metal conductivity (in S/m).  The default
             uses the conductivity of copper.
         :param feed_impedance: The feeding impedance value.  The
