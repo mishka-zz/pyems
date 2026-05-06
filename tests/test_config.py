@@ -38,7 +38,7 @@ def test_duplicate_material_name(tmp_path):
             {"name": "Copper", "kind": "metal", "source_label": "Duplicate"}
         ]
     }))
-    with pytest.raises(ValidationError, match="Duplicate material name found: 'Copper' \(Duplicate\)"):
+    with pytest.raises(ValidationError, match=r"Duplicate material name found: 'Copper' \(Duplicate\)"):
         load(p)
 
 def test_unknown_material_reference(tmp_path):
