@@ -160,15 +160,19 @@ class Simulation:
             other number uses the number provided.
         """
         if not self._calc_only:
-            if debug_pec:
-                self.fdtd.Run(
-                    self.sim_dir,
-                    setup_only=True,
-                    debug_pec=True,
-                    numThreads=threads,
-                )
-            else:
-                self.fdtd.Run(self.sim_dir, cleanup=False, numThreads=threads)
+            original_cwd = os.getcwd()
+            try:
+                if debug_pec:
+                    self.fdtd.Run(
+                        self.sim_dir,
+                        setup_only=True,
+                        debug_pec=True,
+                        numThreads=threads,
+                    )
+                else:
+                    self.fdtd.Run(self.sim_dir, cleanup=False, numThreads=threads)
+            finally:
+                os.chdir(original_cwd)
         self._calc_ports()
 
     def post_mesh(self):
